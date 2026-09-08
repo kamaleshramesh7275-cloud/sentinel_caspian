@@ -1,0 +1,68 @@
+[
+  {
+    "id": "rb-db-pool-exhaustion",
+    "title": "Database Connection Pool Exhaustion",
+    "keywords": ["database", "connection", "pool", "exhausted", "timeout", "postgres", "mysql", "sqlalchemy", "operationalerror", "max_connections"],
+    "summary": "Database client connection pool has reached its max capacity, causing queries to queue and fail with timeout exceptions.",
+    "mitigation_steps": [
+      "1. Inspect active connection count in pg_stat_activity / processlist.",
+      "2. Drain stale or idle-in-transaction connections.",
+      "3. Temporarily increase pool overflow limit or scale database connection pooler (PgBouncer).",
+      "4. Restart unresponsive service worker pods."
+    ],
+    "recommended_action": "drain_db_connections",
+    "action_params": {}
+  },
+  {
+    "id": "rb-redis-oom",
+    "title": "Redis Memory Exhaustion / OOM Eviction",
+    "keywords": ["redis", "oom", "out of memory", "eviction", "command not allowed", "maxmemory", "cache"],
+    "summary": "Redis cache has exceeded maxmemory configuration and is unable to allocate new keys without evicting volatile entries.",
+    "mitigation_steps": [
+      "1. Check Redis memory usage with INFO MEMORY.",
+      "2. Flush non-critical cache partitions or expired sessions.",
+      "3. Increase maxmemory configuration or scale Redis cluster node."
+    ],
+    "recommended_action": "flush_cache",
+    "action_params": {"cache_name": "redis-primary"}
+  },
+  {
+    "id": "rb-payment-gateway-timeout",
+    "title": "Payment Service API Timeout / Circuit Breaker",
+    "keywords": ["payment", "gateway", "stripe", "timeout", "504", "502", "bad gateway", "checkout", "transaction"],
+    "summary": "Payment processing downstream gateway is experiencing elevated latency or HTTP 504 gateway timeouts.",
+    "mitigation_steps": [
+      "1. Check third-party payment gateway status page for upstream outages.",
+      "2. Enable circuit-breaker fallback to queue asynchronous retry jobs.",
+      "3. Restart payment-processor service to reset stale HTTP connection pools."
+    ],
+    "recommended_action": "restart_service",
+    "action_params": {"service_name": "payment-processor"}
+  },
+  {
+    "id": "rb-k8s-crashloop",
+    "title": "Kubernetes Pod CrashLoopBackOff",
+    "keywords": ["crashloopbackoff", "oomkilled", "panic", "fatal", "exit code 1", "exit code 137", "pod", "kubernetes"],
+    "summary": "Container is repeatedly crashing during startup due to uncaught exception, missing config, or OOMKilled signal.",
+    "mitigation_steps": [
+      "1. Inspect last termination logs: kubectl logs <pod> --previous.",
+      "2. Check if latest deployment commit introduced breaking environment variables.",
+      "3. Rollback deployment to previous stable release SHA."
+    ],
+    "recommended_action": "rollback_deployment",
+    "action_params": {"service": "api-gateway"}
+  },
+  {
+    "id": "rb-high-cpu-worker",
+    "title": "High CPU Saturation on Background Workers",
+    "keywords": ["cpu", "utilization", "worker", "load", "saturation", "celery", "queue", "lag"],
+    "summary": "Background task queue is processing high-complexity jobs resulting in sustained >95% CPU utilization.",
+    "mitigation_steps": [
+      "1. Inspect queue backlog and identify long-running heavy tasks.",
+      "2. Scale up replica count for worker pool.",
+      "3. Throttle batch ingestion rates if necessary."
+    ],
+    "recommended_action": "scale_replicas",
+    "action_params": {"service": "worker-pool", "count": 5}
+  }
+]

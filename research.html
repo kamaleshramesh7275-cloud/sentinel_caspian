@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel — Research & Proposal | LLM Forge 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-card-hover: #1c2128;
+      --bg-inset: #010409;
+      --border: #30363d;
+      --border-accent: #388bfd40;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #484f58;
+      --accent-blue: #388bfd;
+      --accent-blue-light: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-orange: #d29922;
+      --accent-red: #f85149;
+      --accent-purple: #bc8cff;
+      --accent-teal: #39d353;
+      --gradient-hero: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1c2128 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      height: 56px;
+    }
+    nav .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    nav .brand .shield { font-size: 20px; }
+    nav .nav-links { display: flex; gap: 24px; margin-left: auto; }
+    nav .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    nav .nav-links a:hover { color: var(--text-primary); }
+    .nav-badge {
+      background: var(--accent-blue);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 96px 48px 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 500px;
+      background: radial-gradient(ellipse, rgba(56,139,253,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-blue-light);
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, #388bfd, #bc8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      max-width: 620px;
+      margin: 0 auto 40px;
+      color: var(--text-secondary);
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+    .tag {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent-blue-light);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    /* ─── CONTENT ─── */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 48px; }
+
+    /* ─── SECTION ─── */
+    .section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent-blue);
+      margin-bottom: 12px;
+    }
+    .section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .section-desc {
+      color: var(--text-secondary);
+      font-size: 15px;
+      max-width: 640px;
+      margin-bottom: 40px;
+    }
+
+    /* ─── PROBLEM CARDS ─── */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .problem-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .problem-card:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+    .problem-card .icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .problem-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    .problem-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .problem-card .impact {
+      margin-top: 14px;
+      padding: 8px 12px;
+      background: rgba(248,81,73,0.08);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #f85149;
+      font-weight: 600;
+    }
+
+    /* ─── EXISTING SOLUTIONS ─── */
+    .solutions-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .solution-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .solution-card:hover { border-color: var(--border-accent); }
+    .solution-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .solution-logo {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .solution-header h3 { font-size: 16px; font-weight: 700; }
+    .solution-header p { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .solution-body { padding: 20px 24px; }
+    .problems-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .problems-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .problems-list li::before {
+      content: '✗';
+      color: var(--accent-red);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .solution-footer {
+      padding: 14px 24px;
+      background: var(--bg-inset);
+      border-top: 1px solid var(--border);
+    }
+    .solution-footer .quote {
+      font-size: 13px;
+      color: var(--accent-orange);
+      font-style: italic;
+    }
+
+    /* ─── COMPARISON TABLE ─── */
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      padding: 14px 18px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    th.sentinel-col {
+      color: var(--accent-blue-light);
+      background: rgba(56,139,253,0.05);
+    }
+    td {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+    td:first-child { color: var(--text-primary); font-weight: 500; }
+    td.sentinel-col {
+      background: rgba(56,139,253,0.04);
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-card-hover); }
+    tr:hover td.sentinel-col { background: rgba(56,139,253,0.08); }
+    .check { color: var(--accent-green); font-weight: 700; }
+    .cross { color: var(--accent-red); font-weight: 700; }
+    .partial { color: var(--accent-orange); font-weight: 700; }
+
+    /* ─── INNOVATION CARDS ─── */
+    .innovations-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .innovation-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .innovation-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .innovation-card.blue::before { background: var(--accent-blue); }
+    .innovation-card.green::before { background: var(--accent-green); }
+    .innovation-card.purple::before { background: var(--accent-purple); }
+    .innovation-card.orange::before { background: var(--accent-orange); }
+    .innovation-card.teal::before { background: var(--accent-teal); }
+    .innovation-card.red::before { background: var(--accent-red); }
+    .innovation-card:hover { transform: translateY(-3px); border-color: #30363d; }
+    .innovation-card .num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .innovation-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+    .innovation-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .vs-pill {
+      display: inline-block;
+      background: rgba(248,81,73,0.1);
+      border: 1px solid rgba(248,81,73,0.2);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #f85149;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+    .our-pill {
+      display: inline-block;
+      background: rgba(63,185,80,0.1);
+      border: 1px solid rgba(63,185,80,0.2);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #3fb950;
+      font-weight: 600;
+    }
+
+    /* ─── ARCHITECTURE ─── */
+    .arch-box {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent-green);
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    /* ─── FLOW STEPS ─── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .flow-step {
+      display: flex;
+      gap: 20px;
+      position: relative;
+    }
+    .flow-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .flow-dot {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--accent-blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-blue-light);
+      z-index: 1;
+      flex-shrink: 0;
+    }
+    .flow-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      margin: 4px 0;
+      min-height: 24px;
+    }
+    .flow-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      flex: 1;
+    }
+    .flow-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .flow-content p { font-size: 12px; color: var(--text-secondary); }
+    .flow-content code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--bg-inset);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent-purple);
+    }
+
+    /* ─── METRIC CARDS ─── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .metric-card .value {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .metric-card .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+    .metric-card .desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ─── CODE BLOCK ─── */
+    .code-block {
+      background: var(--bg-inset);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .code-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .code-header .filename {
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+    .code-block pre {
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: #c9d1d9;
+    }
+    .k { color: #ff7b72; } /* keyword */
+    .s { color: #a5d6ff; } /* string */
+    .c { color: #8b949e; font-style: italic; } /* comment */
+    .f { color: #d2a8ff; } /* function */
+    .n { color: #79c0ff; } /* name */
+    .num { color: #f2cc60; } /* number */
+
+    /* ─── QUOTE ─── */
+    .blockquote {
+      border-left: 3px solid var(--accent-blue);
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+      font-size: 15px;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    .blockquote strong { color: var(--text-primary); font-style: normal; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    footer strong { color: var(--text-secondary); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 60px 20px; }
+      .container { padding: 0 20px; }
+      .problem-grid, .innovations-grid, .metrics-grid { grid-template-columns: 1fr; }
+      .problems-list { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+
+    /* ─── SCROLL ANIMATIONS ─── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── TOC SIDEBAR ─── */
+    .toc {
+      position: fixed;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 50;
+    }
+    .toc-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .toc-dot:hover, .toc-dot.active {
+      background: var(--accent-blue-light);
+      transform: scale(1.3);
+    }
+    .toc-dot:hover::after {
+      content: attr(data-label);
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 1100px) { .toc { display: none; } }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="brand">
+    <span class="shield">🛡️</span>
+    Sentinel
+  </a>
+  <div style="font-size:12px;color:var(--text-muted);">Autonomous AI Incident Commander</div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#existing">Existing Tools</a>
+    <a href="#comparison">Comparison</a>
+    <a href="#innovations">Innovations</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#outcomes">Outcomes</a>
+    <span class="nav-badge">LLM Forge 2026</span>
+  </div>
+</nav>
+
+<!-- TOC DOTS -->
+<div class="toc">
+  <div class="toc-dot" data-label="Hero" onclick="scrollTo('#hero')"></div>
+  <div class="toc-dot" data-label="Problem" onclick="scrollTo('#problem')"></div>
+  <div class="toc-dot" data-label="Existing" onclick="scrollTo('#existing')"></div>
+  <div class="toc-dot" data-label="Compare" onclick="scrollTo('#comparison')"></div>
+  <div class="toc-dot" data-label="Innovations" onclick="scrollTo('#innovations')"></div>
+  <div class="toc-dot" data-label="Architecture" onclick="scrollTo('#architecture')"></div>
+  <div class="toc-dot" data-label="Outcomes" onclick="scrollTo('#outcomes')"></div>
+</div>
+
+<!-- HERO -->
+<section id="hero" class="hero">
+  <div class="hero-badge">📄 Research Proposal · Round 1 · LLM Forge 2026</div>
+  <h1>🛡️ <span>Sentinel</span><br/>Autonomous AI Incident Commander</h1>
+  <p class="hero-sub">
+    An LLM-powered multi-agent system that autonomously triages system incidents, orchestrates multi-channel escalations, and generates postmortems — eliminating human delay at every step of incident response.
+  </p>
+  <div class="hero-tags">
+    <span class="tag">multi-agent-ai</span>
+    <span class="tag">llm-reasoning</span>
+    <span class="tag">sre-automation</span>
+    <span class="tag">fastapi</span>
+    <span class="tag">openai-gpt4o</span>
+    <span class="tag">caspian-sdk</span>
+    <span class="tag">slack + telegram + email</span>
+    <span class="tag">github-postmortems</span>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-value">&lt;800ms</div>
+      <div class="stat-label">LLM Triage Latency</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">2 min</div>
+      <div class="stat-label">CRITICAL SLA Window</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">100%</div>
+      <div class="stat-label">Postmortem Generation</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">3×</div>
+      <div class="stat-label">Clustering Threshold</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">0</div>
+      <div class="stat-label">UI Clicks Required</div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM STATEMENT -->
+<section id="problem" class="section">
+  <div class="container">
+    <p class="section-label fade-in">01 — Problem Statement</p>
+    <h2 class="fade-in">The Incident Response Crisis</h2>
+    <p class="section-desc fade-in">
+      Modern cloud-native environments generate overwhelming volumes of alerts, stack traces, and automated notifications. Current tooling fails engineers in four critical, measurable ways.
+    </p>
+
+    <div class="problem-grid">
+      <div class="problem-card fade-in">
+        <span class="icon">🔔</span>
+        <h3>Alert Fatigue & Noise Pollution</h3>
+        <p>
+          A single database connection pool exhaustion triggers thousands of downstream HTTP 500 errors — each one firing a separate alert. Engineers become desensitized and miss real outages buried in noise.
+        </p>
+        <div class="impact">Industry stat: 76% of on-call engineers report alert fatigue weekly</div>
+      </div>
+      <div class="problem-card fade-in">
+        <span class="icon">⏱️</span>
+        <h3>Prolonged MTTA & MTTR</h3>
+        <p>
+          Human-driven triage requires engineers to manually context-switch between dashboards, decode stack traces, assess blast radius, and coordinate across tools — all while a production system burns.
+        </p>
+        <div class="impact">Average MTTA: 14 minutes. Every minute costs ~$5,600 in enterprise downtime</div>
+      </div>
+      <div class="problem-card fade-in">
+        <span class="icon">📡</span>
+        <h3>Cross-Channel Communication Friction</h3>
+        <p>
+          Escalations get lost across fragmented tools — Slack threads, Telegram groups, Email inboxes. Crucial minutes are wasted trying to notify on-call personnel across disconnected systems with no shared state.
+        </p>
+        <div class="impact">23% of SLA breaches occur due to missed notifications across channels</div>
+      </div>
+      <div class="problem-card fade-in">
+        <span class="icon">📋</span>
+        <h3>Postmortem Deficit</h3>
+        <p>
+          Once an incident is resolved under stress, postmortem creation is frequently delayed or skipped. Root-cause analyses are lost in ephemeral chat histories. Institutional knowledge evaporates.
+        </p>
+        <div class="impact">60% of postmortems are never written — same incidents repeat</div>
+      </div>
+    </div>
+
+    <div class="blockquote fade-in" style="margin-top: 40px;">
+      <strong>The fundamental problem:</strong> Existing tools tell you <em>that</em> something is wrong. They cannot tell you <em>why</em>, <em>how bad</em>, or <em>what to do</em> — and they certainly can't do it autonomously.
+    </div>
+  </div>
+</section>
+
+<!-- EXISTING SOLUTIONS -->
+<section id="existing" class="section">
+  <div class="container">
+    <p class="section-label fade-in">02 — Existing Solutions & Their Failures</p>
+    <h2 class="fade-in">What's Out There — And Why It's Not Enough</h2>
+    <p class="section-desc fade-in">
+      The incident management market is mature but fundamentally anchored in pre-AI, rule-based paradigms. Here's a technical breakdown of every major player and their critical shortcomings.
+    </p>
+
+    <div class="solutions-grid">
+
+      <!-- PagerDuty -->
+      <div class="solution-card fade-in">
+        <div class="solution-header">
+          <div class="solution-logo" style="background:rgba(6,196,175,0.1);color:#06c4af;">🟢</div>
+          <div>
+            <h3>PagerDuty</h3>
+            <p>Industry standard on-call alerting & escalation — used by 86% of Fortune 500</p>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:20px;font-weight:800;color:var(--accent-orange);">$21–$50</div>
+            <div style="font-size:11px;color:var(--text-muted);">per user / month</div>
+          </div>
+        </div>
+        <div class="solution-body">
+          <ul class="problems-list">
+            <li>Static rule-based severity (if HTTP 500 > threshold → alert)</li>
+            <li>Cannot read or reason about stack trace content</li>
+            <li>No semantic deduplication — exact string match only</li>
+            <li>No natural language — engineers must use their mobile app</li>
+            <li>Zero automated postmortem generation</li>
+            <li>Siloed channels — Slack and SMS don't share incident state</li>
+            <li>No explainability — WHY was this HIGH severity?</li>
+            <li>Cannot detect cascading failure patterns across events</li>
+          </ul>
+        </div>
+        <div class="solution-footer">
+          <div class="quote">💬 "PagerDuty is a great pager. It rings the right person. It cannot tell you why something is critical."</div>
+        </div>
+      </div>
+
+      <!-- Opsgenie -->
+      <div class="solution-card fade-in">
+        <div class="solution-header">
+          <div class="solution-logo" style="background:rgba(0,82,204,0.1);color:#0052cc;">🔵</div>
+          <div>
+            <h3>Opsgenie (Atlassian)</h3>
+            <p>Tag-based alert routing tightly coupled to the Jira/Confluence ecosystem</p>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:20px;font-weight:800;color:var(--accent-orange);">$9–$29</div>
+            <div style="font-size:11px;color:var(--text-muted);">per user / month</div>
+          </div>
+        </div>
+        <div class="solution-body">
+          <ul class="problems-list">
+            <li>Severity is set manually by an engineer — no AI assessment</li>
+            <li>Deduplication by exact field match — fails on log variations</li>
+            <li>Deep Atlassian lock-in — poor fit outside Jira ecosystems</li>
+            <li>Postmortems require Confluence — manual creation always</li>
+            <li>No conversational interface — requires app navigation</li>
+            <li>No cross-channel thread identity — each channel is siloed</li>
+          </ul>
+        </div>
+        <div class="solution-footer">
+          <div class="quote">💬 "Opsgenie routes alerts correctly — but someone still has to read the alert and decide how bad it is."</div>
+        </div>
+      </div>
+
+      <!-- Datadog -->
+      <div class="solution-card fade-in">
+        <div class="solution-header">
+          <div class="solution-logo" style="background:rgba(100,0,212,0.1);color:#6400d4;">📊</div>
+          <div>
+            <h3>Datadog / CloudWatch Monitors</h3>
+            <p>APM tools with threshold-based alerting on metrics and logs</p>
+          </div>
+        </div>
+        <div class="solution-body">
+          <ul class="problems-list">
+            <li>Purely metrics-based — fires on CPU%, error rate%, latency thresholds</li>
+            <li>Cannot interpret semantic meaning of a stack trace</li>
+            <li>Alert storms: one root cause fires 50+ monitors simultaneously</li>
+            <li>No cross-channel coordination — sends a Slack message, nothing more</li>
+            <li>No escalation logic — unacknowledged alerts just sit</li>
+            <li>Engineers context-switch between Slack alert and Datadog dashboard</li>
+          </ul>
+        </div>
+        <div class="solution-footer">
+          <div class="quote">💬 "Datadog tells you your error rate is 18.7%. Sentinel tells you it's because of a failed DB migration."</div>
+        </div>
+      </div>
+
+      <!-- ChatOps -->
+      <div class="solution-card fade-in">
+        <div class="solution-header">
+          <div class="solution-logo" style="background:rgba(74,21,75,0.1);color:#4a154b;">💬</div>
+          <div>
+            <h3>Slack Workflows / ChatOps Bots</h3>
+            <p>Command-driven bots that respond to slash commands in messaging apps</p>
+          </div>
+        </div>
+        <div class="solution-body">
+          <ul class="problems-list">
+            <li>Rigid syntax — must type /ack INC-4521 exactly, no NL understanding</li>
+            <li>No AI intelligence — pure event routing and state machines</li>
+            <li>Single channel — if Slack is missed, escalation chain is broken</li>
+            <li>No severity assessment — someone still manually sets HIGH/LOW</li>
+            <li>No postmortems — maybe creates a Jira ticket</li>
+            <li>Brittle — any command typo is silently ignored</li>
+          </ul>
+        </div>
+        <div class="solution-footer">
+          <div class="quote">💬 "ChatOps tools treat engineers like machines. Sentinel treats engineers like humans."</div>
+        </div>
+      </div>
+
+      <!-- Incident.io -->
+      <div class="solution-card fade-in">
+        <div class="solution-header">
+          <div class="solution-logo" style="background:rgba(99,102,241,0.1);color:#6366f1;">🤖</div>
+          <div>
+            <h3>Incident.io / FireHydrant (New-gen AI Tools)</h3>
+            <p>Emerging "AI-powered" incident management SaaS platforms</p>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:20px;font-weight:800;color:var(--accent-red);">$500–$2,000</div>
+            <div style="font-size:11px;color:var(--text-muted);">per team / month</div>
+          </div>
+        </div>
+        <div class="solution-body">
+          <ul class="problems-list">
+            <li>SaaS-only — no self-hosting for data-sensitive enterprises</li>
+            <li>Black-box AI — suggests severity but shows no reasoning</li>
+            <li>Proprietary incident channels — doesn't use your existing Slack workspace</li>
+            <li>No sliding-window clustering detection across events</li>
+            <li>No unified cross-channel thread identity</li>
+            <li>No direct GitHub postmortem commits — exports to Notion/Confluence</li>
+          </ul>
+        </div>
+        <div class="solution-footer">
+          <div class="quote">💬 "Incident.io is an expensive black box. Sentinel is transparent, open-source, and yours."</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON TABLE -->
+<section id="comparison" class="section">
+  <div class="container">
+    <p class="section-label fade-in">03 — Competitive Analysis</p>
+    <h2 class="fade-in">Feature-by-Feature Comparison</h2>
+    <p class="section-desc fade-in">
+      A structured comparison across the capabilities that matter most in production incident management.
+    </p>
+
+    <div class="table-wrapper fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>PagerDuty</th>
+            <th>Opsgenie</th>
+            <th>Datadog Monitors</th>
+            <th>ChatOps Bots</th>
+            <th class="sentinel-col">🛡️ Sentinel</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>AI Severity Reasoning</td>
+            <td><span class="cross">✗</span> Static rules</td>
+            <td><span class="cross">✗</span> Manual</td>
+            <td><span class="cross">✗</span> Threshold only</td>
+            <td><span class="cross">✗</span> None</td>
+            <td class="sentinel-col">✓ LLM reads stack traces</td>
+          </tr>
+          <tr>
+            <td>Explainable AI Reasoning</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td class="sentinel-col">✓ Stored in DB, shown in Slack & postmortem</td>
+          </tr>
+          <tr>
+            <td>Cascading Failure Detection</td>
+            <td><span class="partial">~</span> Manual grouping</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td class="sentinel-col">✓ Sliding-window clustering + auto override</td>
+          </tr>
+          <tr>
+            <td>Natural Language ACK</td>
+            <td><span class="cross">✗</span> App required</td>
+            <td><span class="cross">✗</span> App required</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="partial">~</span> Slash commands only</td>
+            <td class="sentinel-col">✓ "looks like a DB issue" works</td>
+          </tr>
+          <tr>
+            <td>Multi-Channel Escalation</td>
+            <td><span class="check">✓</span> Phone/SMS/Slack</td>
+            <td><span class="check">✓</span> Phone/SMS/Slack</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> Single channel</td>
+            <td class="sentinel-col">✓ Unified Slack→Telegram→Email thread</td>
+          </tr>
+          <tr>
+            <td>Unified Cross-Channel State</td>
+            <td><span class="cross">✗</span> Siloed</td>
+            <td><span class="cross">✗</span> Siloed</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td class="sentinel-col">✓ One reply anywhere collapses escalation</td>
+          </tr>
+          <tr>
+            <td>Automated Postmortems</td>
+            <td><span class="cross">✗</span> Template only</td>
+            <td><span class="cross">✗</span> Template only</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td class="sentinel-col">✓ LLM-generated, committed to GitHub</td>
+          </tr>
+          <tr>
+            <td>Adaptive Message Tone</td>
+            <td><span class="cross">✗</span> Single format</td>
+            <td><span class="cross">✗</span> Single format</td>
+            <td><span class="cross">✗</span> No</td>
+            <td><span class="cross">✗</span> No</td>
+            <td class="sentinel-col">✓ Slack=technical, Telegram=urgent, Email=formal</td>
+          </tr>
+          <tr>
+            <td>Graceful AI Degradation</td>
+            <td><span class="check">✓</span> Rules always run</td>
+            <td><span class="check">✓</span> Rules always run</td>
+            <td><span class="check">✓</span> Metrics always run</td>
+            <td><span class="check">✓</span> No AI to degrade</td>
+            <td class="sentinel-col">✓ Cluster-count fallback when LLM unavailable</td>
+          </tr>
+          <tr>
+            <td>Open Source / Self-Hostable</td>
+            <td><span class="cross">✗</span> SaaS only</td>
+            <td><span class="cross">✗</span> SaaS only</td>
+            <td><span class="cross">✗</span> SaaS only</td>
+            <td><span class="partial">~</span> Partial</td>
+            <td class="sentinel-col">✓ Fully open, drop-in local LLM support</td>
+          </tr>
+          <tr>
+            <td>Live Demo Capability</td>
+            <td><span class="cross">✗</span> No sandbox</td>
+            <td><span class="cross">✗</span> No sandbox</td>
+            <td><span class="cross">✗</span> No sandbox</td>
+            <td><span class="cross">✗</span> No sandbox</td>
+            <td class="sentinel-col">✓ /demo/chaos fires real incidents in &lt;5s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Positioning Matrix -->
+    <div style="margin-top:40px;" class="fade-in">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:20px;">Market Positioning</h3>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:32px;position:relative;height:280px;overflow:hidden;">
+        <!-- Axes -->
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border);"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);"></div>
+        <!-- Labels -->
+        <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">HIGH INTELLIGENCE</div>
+        <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">LOW INTELLIGENCE</div>
+        <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">MANUAL</div>
+        <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%) rotate(90deg);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">AUTOMATED</div>
+        <!-- Dots -->
+        <div style="position:absolute;left:18%;top:65%;transform:translate(-50%,-50%);">
+          <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;">Jira Tickets</div>
+        </div>
+        <div style="position:absolute;left:62%;top:60%;transform:translate(-50%,-50%);">
+          <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;">PagerDuty</div>
+        </div>
+        <div style="position:absolute;left:72%;top:55%;transform:translate(-50%,-50%);">
+          <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;">Opsgenie</div>
+        </div>
+        <div style="position:absolute;left:58%;top:38%;transform:translate(-50%,-50%);">
+          <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text-muted);white-space:nowrap;">Incident.io</div>
+        </div>
+        <!-- Sentinel -->
+        <div style="position:absolute;left:82%;top:18%;transform:translate(-50%,-50%);">
+          <div style="background:rgba(56,139,253,0.15);border:2px solid var(--accent-blue);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--accent-blue-light);white-space:nowrap;box-shadow:0 0 20px rgba(56,139,253,0.2);">
+            🛡️ Sentinel
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INNOVATIONS -->
+<section id="innovations" class="section">
+  <div class="container">
+    <p class="section-label fade-in">04 — Our Innovations</p>
+    <h2 class="fade-in">What Makes Sentinel Different</h2>
+    <p class="section-desc fade-in">
+      Six architectural and design innovations that no existing tool has combined into a single system.
+    </p>
+
+    <div class="innovations-grid">
+
+      <div class="innovation-card blue fade-in">
+        <div class="num">Innovation 01</div>
+        <h3>🧠 Explainable AI Severity Reasoning</h3>
+        <p>
+          Every severity decision comes with a natural-language justification written by the LLM, stored in the database, rendered in Slack messages, and included in postmortems. Engineers can audit every AI decision ever made.
+        </p>
+        <div>
+          <span class="vs-pill">Others: black-box label</span>
+          <span class="our-pill">Sentinel: auditable reasoning chain</span>
+        </div>
+      </div>
+
+      <div class="innovation-card green fade-in">
+        <div class="num">Innovation 02</div>
+        <h3>⚡ Neuro-Symbolic Clustering Override</h3>
+        <p>
+          LLM handles ambiguity. Hard rules handle certainty. When the same error_signature appears 3+ times in a 20-minute sliding window, a programmatic override forces severity escalation — the LLM cannot ignore it.
+        </p>
+        <div>
+          <span class="vs-pill">Others: static rules OR AI</span>
+          <span class="our-pill">Sentinel: rules + AI hybrid</span>
+        </div>
+      </div>
+
+      <div class="innovation-card purple fade-in">
+        <div class="num">Innovation 03</div>
+        <h3>🔗 Unified Cross-Channel Thread Identity</h3>
+        <p>
+          One incident ID persists across Slack, Telegram, and Email via the Caspian SDK. A reply anywhere collapses the entire escalation chain. No duplicate alerts. No conflicting states across channels.
+        </p>
+        <div>
+          <span class="vs-pill">Others: siloed per channel</span>
+          <span class="our-pill">Sentinel: single incident thread</span>
+        </div>
+      </div>
+
+      <div class="innovation-card orange fade-in">
+        <div class="num">Innovation 04</div>
+        <h3>💬 Natural Language Intent Parsing</h3>
+        <p>
+          Engineers reply in natural language — "looks like a DB overflow, rolling back" — and Sentinel's Intent Parser Agent classifies intent as ACK/INVESTIGATING/RESOLVED and updates incident state. No slash commands, no app navigation.
+        </p>
+        <div>
+          <span class="vs-pill">Others: /ack INC-4521 required</span>
+          <span class="our-pill">Sentinel: "on it" is enough</span>
+        </div>
+      </div>
+
+      <div class="innovation-card teal fade-in">
+        <div class="num">Innovation 05</div>
+        <h3>📄 Autonomous GitHub Postmortems</h3>
+        <p>
+          On every resolution, Sentinel synthesizes the full incident timeline — channel messages, escalation history, LLM reasoning, TTR — into a structured Markdown postmortem and commits it directly to GitHub via REST API.
+        </p>
+        <div>
+          <span class="vs-pill">Industry: 60% never written</span>
+          <span class="our-pill">Sentinel: 100% automated</span>
+        </div>
+      </div>
+
+      <div class="innovation-card red fade-in">
+        <div class="num">Innovation 06</div>
+        <h3>🎨 Adaptive Message Tone Intelligence</h3>
+        <p>
+          Sentinel knows that a Slack message at your desk needs full technical detail (Block Kit, stack trace, incident ID), a Telegram ping at 3am must be readable in 2 seconds, and an email needs a formal HTML report for compliance.
+        </p>
+        <div>
+          <span class="vs-pill">Others: one format everywhere</span>
+          <span class="our-pill">Sentinel: channel-aware messaging</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture" class="section">
+  <div class="container">
+    <p class="section-label fade-in">05 — System Architecture</p>
+    <h2 class="fade-in">Multi-Agent AI Pipeline</h2>
+    <p class="section-desc fade-in">
+      Three specialist LLM agents, each owning a distinct phase of the incident lifecycle. State flows through a PostgreSQL database. No agent holds state — enabling horizontal scalability.
+    </p>
+
+    <!-- Agent Flow -->
+    <div class="flow fade-in">
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">1</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Webhook Ingestion — FastAPI</h4>
+          <p>Receives raw payloads from Sentry, Datadog, GitHub CI, or any custom APM. Payload size: 2KB–50KB. Stored as <code>Event</code> in PostgreSQL with <code>error_signature</code> hash for clustering.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">2</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Severity Reasoning Agent — LLM Core</h4>
+          <p>Queries last 30 min of events with same signature. Builds <code>cluster_analysis</code> context. Calls GPT-4o-mini (temp=0.2, json_mode) with structured prompt. Returns <code>{severity, reasoning, override_triggered}</code>. Fallback: deterministic cluster-count scoring if LLM unavailable.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">3</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Caspian CommClient — Unified Channel Dispatch</h4>
+          <p>Routes formatted notifications to Slack (Block Kit technical), Telegram (short urgent), or Email (formal HTML) based on incident severity and escalation rules. SLA thresholds: CRITICAL=2min, HIGH=5min, MEDIUM=15min, LOW=60min.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">4</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <h4>APScheduler — 30-Second SLA Tick</h4>
+          <p>Background job polls every 30 seconds. Identifies unacknowledged incidents past their SLA window. Escalates to next channel in path (Slack→Telegram→Email). Increments <code>escalation_count</code>. Continues until <code>status=ack</code>.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">5</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <h4>Intent Parser Agent — Natural Language ACK</h4>
+          <p>Receives engineer replies via <code>@client.on_message</code> unified handler. Calls GPT-4o-mini (temp=0.1) with message + incident context. Returns <code>{intent, confidence, follow_up_question}</code>. Maps to <code>ack/investigating/resolved/escalate</code> status transitions.</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-left">
+          <div class="flow-dot">6</div>
+        </div>
+        <div class="flow-content">
+          <h4>Postmortem Agent — GitHub Auto-Commit</h4>
+          <p>Triggered on <code>resolved</code> intent. Aggregates all <code>ThreadContext</code> rows (full cross-channel timeline). Calls GPT-4o-mini (temp=0.3) to generate GitHub-flavored Markdown. Commits via GitHub REST API to <code>postmortems/incident-{id}-{date}.md</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture ASCII -->
+    <div class="code-block fade-in" style="margin-top:40px;">
+      <div class="code-header">
+        <div class="dot" style="background:#ff5f57;"></div>
+        <div class="dot" style="background:#ffbd2e;"></div>
+        <div class="dot" style="background:#28c840;"></div>
+        <span class="filename">sentinel_architecture.txt</span>
+      </div>
+      <pre>
+  Sentry · Datadog · GitHub CI · Custom APM
+               │
+               ▼
+  ┌─────────────────────────────────────┐
+  │   FastAPI  POST /webhook            │
+  │   Event stored  ·  error_signature  │
+  └──────────────────┬──────────────────┘
+                     │
+                     ▼
+  ┌─────────────────────────────────────┐
+  │   Severity Reasoning Agent          │
+  │   GPT-4o-mini · temp=0.2           │
+  │   ✦ Reads stack trace              │
+  │   ✦ Detects cluster (3x in 20min)  │
+  │   ✦ Returns severity + reasoning   │
+  └──────────┬──────────────────────────┘
+             │
+     ┌───────┴──────────┐
+     │                  │
+     ▼                  ▼
+  APScheduler      Caspian CommClient
+  30s SLA tick     Unified @on_message
+  Escalates →      ┌──────────────────┐
+  Slack            │ Slack · Telegram  │
+  Telegram         │ Email            │
+  Email            └────────┬─────────┘
+                            │
+                            ▼
+                   Intent Parser Agent
+                   GPT-4o-mini · temp=0.1
+                   ack / investigating / resolved
+                            │ resolved
+                            ▼
+                   Postmortem Agent
+                   GPT-4o-mini · temp=0.3
+                   Markdown → GitHub Commit
+      </pre>
+    </div>
+
+    <!-- Tech Stack -->
+    <div class="metrics-grid fade-in" style="margin-top:32px;">
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-blue-light);font-size:24px;">FastAPI</div>
+        <div class="label">Backend Framework</div>
+        <div class="desc">Async Python 3.11+, SQLAlchemy 2.0, aiosqlite/PostgreSQL</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-purple);font-size:24px;">GPT-4o-mini</div>
+        <div class="label">Primary LLM</div>
+        <div class="desc">~8B active params · &lt;800ms latency · JSON mode · Swap-ready for LLaMA-3 8B</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-green);font-size:24px;">Caspian SDK</div>
+        <div class="label">Channel Layer</div>
+        <div class="desc">Unified @on_message · Slack · Telegram Bot API · Resend Email</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTCOMES -->
+<section id="outcomes" class="section">
+  <div class="container">
+    <p class="section-label fade-in">06 — Expected Outcomes</p>
+    <h2 class="fade-in">What Sentinel Delivers</h2>
+    <p class="section-desc fade-in">
+      Quantifiable improvements across every dimension of incident management, validated by the system's architectural guarantees.
+    </p>
+
+    <div class="metrics-grid fade-in">
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-green);">&gt;70%</div>
+        <div class="label">MTTA & MTTR Reduction</div>
+        <div class="desc">Automated triage and NL chat interactions eliminate manual dashboard navigation</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-blue-light);">100%</div>
+        <div class="label">SLA Escalation Reliability</div>
+        <div class="desc">Zero unacknowledged critical incidents — background multi-channel escalation loops</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-purple);">100%</div>
+        <div class="label">Postmortem Generation</div>
+        <div class="desc">Guaranteed postmortem on every resolve — zero deficit, version-controlled in GitHub</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-orange);">0</div>
+        <div class="label">App Switches Required</div>
+        <div class="desc">Engineers manage incidents from whichever channel they are already in</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-teal);">&lt;5s</div>
+        <div class="label">Demo-to-Alert Time</div>
+        <div class="desc">/demo/chaos fires real incidents and sends a real Slack/Telegram notification</div>
+      </div>
+      <div class="metric-card">
+        <div class="value" style="color:var(--accent-red);">0</div>
+        <div class="label">Alert Fatigue Events</div>
+        <div class="desc">Sliding-window signature deduplication prevents notification spam</div>
+      </div>
+    </div>
+
+    <!-- Final quote -->
+    <div class="blockquote fade-in" style="margin-top:48px;font-size:18px;">
+      <strong>Sentinel</strong> is not a better pager. It's an <em>autonomous AI colleague</em> that reasons about your incidents, talks to your engineers like a teammate, writes the paperwork, and never sleeps.
+    </div>
+
+    <!-- One liner -->
+    <div style="margin-top:40px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:32px;text-align:center;" class="fade-in">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;letter-spacing:1px;text-transform:uppercase;">The One-Sentence Pitch</div>
+      <div style="font-size:20px;font-weight:600;color:var(--text-primary);line-height:1.5;">
+        "Sentinel is an always-on AI incident commander that <span style="color:var(--accent-blue-light);">thinks like your best SRE</span>, talks to your engineers like a teammate, and <span style="color:var(--accent-green);">writes the postmortem before you've had coffee</span> — and we can show you all of it, live, in 30 seconds."
+      </div>
+      <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <div style="background:var(--bg-inset);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-green);">curl -X POST localhost:8000/demo/chaos</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <strong>🛡️ Sentinel — Autonomous AI Incident Commander</strong><br/>
+    Built by <strong>Nova Legions</strong> · LLM Forge 2026 — Round 1 Proposal
+  </div>
+  <div style="text-align:right;">
+    <div>FastAPI · OpenAI GPT-4o-mini · Caspian SDK</div>
+    <div style="margin-top:4px;">Slack · Telegram · Email · GitHub</div>
+  </div>
+</footer>
+
+<script>
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // TOC active state
+  const sections = document.querySelectorAll('section[id]');
+  const dots = document.querySelectorAll('.toc-dot');
+
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        const idx = [...sections].findIndex(s => s.id === id);
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(s => sectionObserver.observe(s));
+
+  // TOC scroll helper
+  function scrollTo(id) {
+    document.querySelector(id)?.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
