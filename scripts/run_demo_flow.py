@@ -39,7 +39,7 @@ async def main():
     print("🛡️  SENTINEL — COMPLETE AUTONOMOUS INCIDENT COMMANDER DEMO")
     print("=" * 65)
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         # Act 1: Trigger Chaos Burst
         print("\n⚡ [Act I] Firing Synthetic Chaos Burst (POST /demo/chaos)...", flush=True)
         try:

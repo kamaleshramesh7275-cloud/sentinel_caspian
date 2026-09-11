@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     resend_api_key: Optional[str] = None
     email_from: str = "sentinel@example.com"
     email_to_oncall: str = "oncall@example.com"
+    email_dry_run: bool = False
+    demo_send_real_emails: bool = False
+    email_daily_quota: int = 80
+    email_cooldown_minutes: int = 15
+    email_min_severity: str = "critical"
 
     # GitHub
     github_token: Optional[str] = None

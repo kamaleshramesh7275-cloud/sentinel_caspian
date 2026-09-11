@@ -29,15 +29,13 @@ async def reset_database():
     print("🧹 SENTINEL DATABASE CLEAN-SLATE RESET")
     print("=" * 60)
 
-    await init_db()
+    # Drop all and recreate to ensure full schema parity with latest models
+    from app.database import engine, Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
     async with AsyncSessionLocal() as db:
-        print("🗑️  Purging old thread context, events, and incidents...", flush=True)
-        await db.execute(delete(ThreadContext))
-        await db.execute(delete(Event))
-        await db.execute(delete(Incident))
-        await db.execute(delete(EscalationRule))
-        await db.commit()
 
         print("🌱 Seeding clean default SLA escalation rules...", flush=True)
         rules = [

@@ -160,8 +160,8 @@ async def trigger_chaos(
         incident.current_channel = channel
         db.add(incident)
 
-        # Send notification in background
-        background_tasks.add_task(send_channel_notification, incident, channel)
+        # Send notification in background (guarded by quota manager for demo runs)
+        background_tasks.add_task(send_channel_notification, incident, channel, is_demo=True)
 
         logger.info(
             f"[Demo] ✅ Chaos complete! incident={str(incident.id)[:8]} "

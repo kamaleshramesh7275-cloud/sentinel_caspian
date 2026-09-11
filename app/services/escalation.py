@@ -100,6 +100,15 @@ async def _maybe_escalate(
     # Determine next channel
     escalation_path: list = rule.escalation_path
     current_channel = incident.current_channel
+    
+    # If already at the end of the escalation path and notified, avoid repeat spam
+    current_idx = escalation_path.index(current_channel) if current_channel in escalation_path else -1
+    if current_idx == len(escalation_path) - 1 and (incident.escalation_count or 0) >= len(escalation_path):
+        logger.debug(
+            f"[Escalation] Incident {str(incident.id)[:8]} reached end of escalation path ({current_channel}). Capping alerts."
+        )
+        return
+
     next_channel = _get_next_channel(escalation_path, current_channel)
 
     logger.info(

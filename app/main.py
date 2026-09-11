@@ -190,7 +190,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.routers import webhook, reply, incidents, demo, ws, remediation
+from app.routers import webhook, reply, incidents, demo, ws, remediation, ai_inspector, activities
 
 # Mount routers
 app.include_router(webhook.router)
@@ -199,6 +199,8 @@ app.include_router(incidents.router)
 app.include_router(demo.router)
 app.include_router(ws.router)
 app.include_router(remediation.router)
+app.include_router(ai_inspector.router)
+app.include_router(activities.router)
 
 
 @app.get("/health", tags=["Health"])
@@ -211,6 +213,21 @@ async def health():
         db="connected",
         channels_available=settings.available_channels,
     )
+
+
+@app.get("/quota/status", tags=["Diagnostics"])
+async def get_email_quota_status():
+    """Check Resend email consumption and circuit breaker state."""
+    from app.services.quota_manager import quota_manager
+    return quota_manager.get_status()
+
+
+@app.post("/quota/reset", tags=["Diagnostics"])
+async def reset_email_circuit_breaker():
+    """Manually reset the email circuit breaker."""
+    from app.services.quota_manager import quota_manager
+    quota_manager.reset_circuit_breaker()
+    return {"message": "Circuit breaker reset successfully", "status": quota_manager.get_status()}
 
 
 @app.get("/", tags=["Root"])

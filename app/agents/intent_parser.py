@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Optional
 
 from openai import AsyncOpenAI
@@ -83,10 +84,14 @@ What is the engineer's intent?"""
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
+            response_format={"type": "json_object"},
             temperature=0.1,
             max_tokens=300,
         )
         raw = response.choices[0].message.content.strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```(?:json)?\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
         parsed = json.loads(raw)
 
         intent = parsed.get("intent", "unclear")

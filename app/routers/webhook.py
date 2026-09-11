@@ -83,6 +83,22 @@ async def _process_ingestion(
     )
     db.add(thread_entry)
 
+    # Activity Logging: Gemini Severity Triage
+    try:
+        from app.services.activity_logger import activity_logger
+        await activity_logger.log_activity(
+            category="llm",
+            title=f"Gemini Severity Triage [{severity.upper()}]",
+            summary=f"Evaluated event from {payload.source} -> {severity.upper()} {'(Clustering Boost)' if override else ''}",
+            details=reasoning,
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=severity,
+            metadata={"agent": "severity_agent", "override": override, "source": payload.source},
+        )
+    except Exception as e:
+        logger.debug(f"[Webhook] Activity log failed: {e}")
+
     logger.info(
         f"[Webhook] Incident {str(incident.id)[:8]} | action={action} | "
         f"severity={severity} | override={override}"

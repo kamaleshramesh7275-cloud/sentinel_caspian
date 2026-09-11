@@ -212,6 +212,9 @@ def format_email(incident: Incident) -> dict:
     return {"subject": subject, "html_body": html_body}
 
 
+from app.services.activity_logger import activity_logger
+
+
 async def send_slack_notification(incident: Incident) -> bool:
     """Send Slack notification directly via slack_sdk, preserving thread continuity."""
     if not settings.slack_bot_token:
@@ -236,6 +239,16 @@ async def send_slack_notification(incident: Incident) -> bool:
             incident.channel_metadata = dict(meta)
 
         logger.info(f"[Notifier] ✅ Slack notification sent for incident {incident.id} (thread_ts={meta.get('slack_ts')})")
+        await activity_logger.log_activity(
+            category="slack",
+            title=f"Slack Alert Dispatched #{settings.slack_incident_channel}",
+            summary=f"Incident alert posted for '{incident.title}' [{incident.severity.upper() if incident.severity else 'UNKNOWN'}]",
+            details=message["text"],
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=incident.severity,
+            metadata={"channel": "slack", "slack_channel": settings.slack_incident_channel, "thread_ts": meta.get("slack_ts")},
+        )
         return True
     except Exception as e:
         logger.error(f"[Notifier] Slack send failed: {e}")
@@ -267,31 +280,89 @@ async def send_telegram_notification(incident: Incident) -> bool:
             incident.channel_metadata = dict(meta)
 
         logger.info(f"[Notifier] ✅ Telegram notification sent for incident {incident.id}")
+        await activity_logger.log_activity(
+            category="telegram",
+            title="Telegram Alert Dispatched",
+            summary=f"Urgent alert pushed to chat {settings.telegram_chat_id}",
+            details=text,
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=incident.severity,
+            metadata={"channel": "telegram", "chat_id": str(settings.telegram_chat_id), "reply_to": reply_to},
+        )
         return True
     except Exception as e:
         logger.error(f"[Notifier] Telegram send failed: {e}")
         return False
 
 
-async def send_email_notification(incident: Incident) -> bool:
-    """Send email notification via Resend."""
-    if not settings.resend_api_key:
-        logger.warning("[Notifier] Resend API key not configured — skipping")
+async def send_email_notification(incident: Incident, is_demo: bool = False) -> bool:
+    """Send email notification via Resend with quota optimization and circuit breaker protection."""
+    from app.services.quota_manager import quota_manager
+
+    # Format email payload first
+    email_content = format_email(incident)
+    short_id = str(incident.id)[:8]
+
+    # Evaluate whether real outbound Resend dispatch is permitted
+    can_send, reason = quota_manager.can_send_email(
+        incident_id=str(incident.id),
+        severity=incident.severity,
+        is_demo=is_demo,
+    )
+
+    if not can_send:
+        # Mock / Simulated mode — log email without consuming Resend quota
+        logger.info(
+            f"[Notifier] 📨 [EMAIL SIMULATED / QUOTA SAVER] ({reason}) "
+            f"Incident={short_id} To={settings.email_to_oncall} Subject='{email_content['subject']}'"
+        )
+        quota_manager.record_email_dispatched(incident_id=str(incident.id), real_api_call=False)
+        await activity_logger.log_activity(
+            category="email",
+            title="Email Quota Saver / Simulated Dispatch",
+            summary=f"Notification simulated to {settings.email_to_oncall} ({reason})",
+            details=f"Subject: {email_content['subject']}\nReason: {reason}",
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=incident.severity,
+            metadata={"channel": "email", "to": settings.email_to_oncall, "simulated": True, "reason": reason},
+        )
+        return True
+
+    if not settings.resend_api_key or "YOUR_RESEND" in settings.resend_api_key:
+        logger.warning("[Notifier] Resend API key not configured — skipping live email")
+        quota_manager.record_email_dispatched(incident_id=str(incident.id), real_api_call=False)
         return False
+
     try:
         import resend
         resend.api_key = settings.resend_api_key
-        email_content = format_email(incident)
         resend.Emails.send({
             "from": settings.email_from,
             "to": [settings.email_to_oncall],
             "subject": email_content["subject"],
             "html": email_content["html_body"],
         })
-        logger.info(f"[Notifier] ✅ Email notification sent for incident {incident.id}")
+        quota_manager.record_email_dispatched(incident_id=str(incident.id), real_api_call=True)
+        logger.info(f"[Notifier] ✅ Live Resend email notification sent for incident {short_id}")
+        await activity_logger.log_activity(
+            category="email",
+            title="Email Dispatched (Resend API)",
+            summary=f"Incident report delivered to {settings.email_to_oncall}",
+            details=f"Subject: {email_content['subject']}\nStatus: Live Sent",
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=incident.severity,
+            metadata={"channel": "email", "to": settings.email_to_oncall, "simulated": False},
+        )
         return True
     except Exception as e:
-        logger.error(f"[Notifier] Email send failed: {e}")
+        err_msg = str(e)
+        logger.error(f"[Notifier] Live Resend send failed: {err_msg}")
+        # Trip circuit breaker if quota or rate limit error
+        if "limit" in err_msg.lower() or "429" in err_msg or "rate" in err_msg.lower() or "quota" in err_msg.lower():
+            quota_manager.trip_circuit_breaker(f"Resend error: {err_msg}")
         return False
 
 
@@ -310,6 +381,16 @@ async def send_incident_update_notification(incident: Incident, update_text: str
                 text=f"📢 *Incident `{short_id}` Update:*\n{update_text}",
                 thread_ts=meta.get("slack_ts"),
             )
+            await activity_logger.log_activity(
+                category="slack",
+                title="Slack Thread Update",
+                summary=f"In-thread update posted: {update_text[:60]}...",
+                details=update_text,
+                incident_id=str(incident.id),
+                incident_title=incident.title,
+                severity=incident.severity,
+                metadata={"channel": "slack", "thread_ts": meta.get("slack_ts")},
+            )
         except Exception as e:
             logger.error(f"[Notifier] In-thread Slack update failed: {e}")
 
@@ -325,19 +406,28 @@ async def send_incident_update_notification(incident: Incident, update_text: str
                 parse_mode=ParseMode.MARKDOWN,
                 reply_to_message_id=meta.get("telegram_message_id"),
             )
+            await activity_logger.log_activity(
+                category="telegram",
+                title="Telegram Reply Update",
+                summary=f"In-thread reply sent: {update_text[:60]}...",
+                details=update_text,
+                incident_id=str(incident.id),
+                incident_title=incident.title,
+                severity=incident.severity,
+                metadata={"channel": "telegram", "reply_to": meta.get("telegram_message_id")},
+            )
         except Exception as e:
             logger.error(f"[Notifier] In-thread Telegram update failed: {e}")
 
 
-async def send_channel_notification(incident: Incident, channel: str) -> bool:
+async def send_channel_notification(incident: Incident, channel: str, is_demo: bool = False) -> bool:
     """Route notification to the correct channel."""
-    channel_map = {
-        "slack": send_slack_notification,
-        "telegram": send_telegram_notification,
-        "email": send_email_notification,
-    }
-    handler = channel_map.get(channel)
-    if not handler:
+    if channel == "email":
+        return await send_email_notification(incident, is_demo=is_demo)
+    elif channel == "slack":
+        return await send_slack_notification(incident)
+    elif channel == "telegram":
+        return await send_telegram_notification(incident)
+    else:
         logger.error(f"[Notifier] Unknown channel: {channel}")
         return False
-    return await handler(incident)

@@ -187,10 +187,10 @@ You must return your response in purely valid JSON format without any markdown w
         matched_rb = rag_engine.search_runbook(search_blob)
         if matched_rb:
             steps_preview = " ".join(matched_rb["mitigation_steps"][:2])
-            reasoning += f"\n📖 Suggested Runbook: {matched_rb['title']} (Action: {matched_rb['recommended_action']}) | Mitigation: {steps_preview}"
+            reasoning += f"\nSuggested Runbook: {matched_rb['title']} (Action: {matched_rb['recommended_action']}) | Mitigation: {steps_preview}"
 
         logger.info(
-            f"[SeverityAgent] ✅ severity={severity} override={override_triggered}\n"
+            f"[SeverityAgent] severity={severity} override={override_triggered}\n"
             f"  Reasoning: {reasoning}"
         )
 

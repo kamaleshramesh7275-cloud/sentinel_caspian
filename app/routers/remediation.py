@@ -76,6 +76,22 @@ async def execute_incident_remediation(
     )
     db.add(thread_entry)
 
+    # Activity Logging: Remediation Execution
+    try:
+        from app.services.activity_logger import activity_logger
+        await activity_logger.log_activity(
+            category="remediation",
+            title=f"Auto-Remediation: {req.action}",
+            summary=f"Automated fix {'succeeded' if res.success else 'failed'} for incident {str(incident.id)[:8]}",
+            details=res.output,
+            incident_id=str(incident.id),
+            incident_title=incident.title,
+            severity=incident.severity,
+            metadata={"action": req.action, "success": res.success, "params": req.params},
+        )
+    except Exception as e:
+        logger.debug(f"[Remediation] Activity log failed: {e}")
+
     postmortem_url = None
     if res.success and req.auto_resolve:
         from datetime import datetime, timezone
