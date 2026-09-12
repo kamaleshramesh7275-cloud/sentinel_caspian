@@ -1,7 +1,14 @@
+import sys
 import asyncio
 import os
 import json
 from dotenv import load_dotenv
+
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except Exception:
+    pass
 
 load_dotenv()
 
@@ -12,7 +19,7 @@ from app.agents.intent_parser import parse_intent
 from app.agents.postmortem_agent import generate_postmortem
 
 async def test_all_agents():
-    print("Testing Sentinel AI Agents against Gemini API...")
+    print("Testing Sentinel AI Agents against local fine-tuned Sentinel model...")
     await init_db()
     
     async with AsyncSessionLocal() as db:
@@ -78,7 +85,7 @@ async def test_all_agents():
         )
         print(f"Generated Postmortem Result: {pm_res}")
         
-    print("\n✅ All AI agents tested successfully!")
+    print("\n[SUCCESS] All Sentinel AI agents executed and validated successfully!")
 
 if __name__ == "__main__":
     asyncio.run(test_all_agents())

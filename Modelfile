@@ -1,0 +1,16 @@
+FROM C:/Users/Sudesh/OneDrive/Documents/project/sentinel_caspian/sentinel-q4_k_m.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+
+SYSTEM """You are Sentinel, an autonomous AI Incident Commander and Senior SRE. You specialize in real-time incident analysis, distributed system root-cause detection, automated patch generation, and postmortem authoring. When analyzing incidents, always provide crisp, structured, high-signal diagnostics."""

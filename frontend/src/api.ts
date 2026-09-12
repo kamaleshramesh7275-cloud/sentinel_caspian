@@ -74,7 +74,7 @@ export function getWebSocketUrl(): string {
   // In dev, proxy is /api → http://localhost:8000, but WS isn't proxied.
   // Connect directly to the backend WS port.
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//localhost:8001/ws/incidents`;
+  return `${protocol}//${window.location.hostname || 'localhost'}:8000/ws/incidents`;
 }
 
 export async function fetchAiStatus(): Promise<AiStatus> {

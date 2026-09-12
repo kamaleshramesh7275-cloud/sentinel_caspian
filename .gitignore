@@ -40,3 +40,14 @@ alembic/versions/*.pyc
 
 # Logs
 *.log
+
+# Large Datasets & Models
+*.gguf
+*.jsonl
+*.flag
+*.exe
+llama-bins/
+llama.cpp/
+sentinel-finetuned/
+sentinel-merged/
+sentinel-lora/

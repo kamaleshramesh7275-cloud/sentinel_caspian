@@ -1,16 +1,18 @@
 import asyncio
-import asyncpg
-import ssl
+import os
+from dotenv import load_dotenv
+from app.database import engine
+from sqlalchemy import text
+
+load_dotenv()
 
 async def main():
-    print('Connecting...')
+    db_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sentinel.db")
+    print(f'Testing DB connection to: {db_url[:30]}...')
     try:
-        conn = await asyncpg.connect(
-            'postgresql://neondb_owner:npg_NkDAY4d2WCmi@ep-weathered-feather-ayej9z85-pooler.c-5.us-east-2.aws.neon.tech/neondb',
-            ssl=ssl.create_default_context()
-        )
-        print('Connected!')
-        await conn.close()
+        async with engine.connect() as conn:
+            res = await conn.execute(text("SELECT 1"))
+            print('DB connection successful! Result:', res.scalar())
     except Exception as e:
         print(f"Error: {e}")
 
