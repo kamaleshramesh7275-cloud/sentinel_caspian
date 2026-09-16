@@ -146,6 +146,21 @@ Full timeline:
             metadata={"agent": "postmortem_generator", "chars": len(markdown_content)},
         )
 
+        # Index resolved incident into Long-Term Episodic Vector Memory
+        try:
+            from app.services.vector_memory import vector_memory
+            vector_memory.index_incident(
+                incident_id=str(incident.id),
+                title=incident.title,
+                service=incident.service or "service",
+                error_signature=incident.error_signature or "UnknownError",
+                root_cause=incident.agent_reasoning or "Underlying system fault",
+                resolution="Resolved by on-call engineer and auto-remediation",
+                severity=incident.severity,
+            )
+        except Exception as err:
+            logger.warning(f"[PostmortemAgent] Vector memory indexing skipped: {err}")
+
         # Commit to GitHub
         github_url = await _commit_to_github(incident, markdown_content)
         return github_url

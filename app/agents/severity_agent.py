@@ -97,6 +97,14 @@ async def run_severity_agent(
         f"cluster_count={cluster_window_count}"
     )
 
+    # 3b. Query Long-Term Episodic Vector Memory for historical precedents
+    from app.services.vector_memory import vector_memory
+    historical_matches = vector_memory.search_historical_incidents(
+        query=f"{new_event.source} {str(new_event.raw_payload)[:300]}",
+        error_signature=new_event.error_signature,
+        top_k=2,
+    )
+
     # 4. Build context for LLM
     event_context = {
         "new_event": {
@@ -119,6 +127,7 @@ async def run_severity_agent(
             "clustering_override_threshold": 3,
             "override_condition_met": cluster_window_count >= 3,
         },
+        "historical_incident_precedents": historical_matches,
         "escalation_rules": [
             {
                 "severity": r.severity,
@@ -133,7 +142,9 @@ async def run_severity_agent(
 
 {json.dumps(event_context, indent=2)}
 
-Remember: if cluster_analysis.override_condition_met is true, you MUST bump severity one level higher.
+Remember:
+1. If cluster_analysis.override_condition_met is true, you MUST bump severity one level higher and explicitly state "CLUSTERING OVERRIDE TRIGGERED" in reasoning.
+2. If historical_incident_precedents are present and relevant, cite the past incident ID or prior resolution in your reasoning.
 You must return your response in purely valid JSON format without any markdown wrapper. Example output:
 {{"severity": "critical", "reasoning": "...", "override_triggered": true}}
 """

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AiStatus, AgentTestResult } from '../types';
-import { fetchAiStatus, testAgent } from '../api';
+import { fetchAiStatus, testAgent, runModelArena, fetchVectorMemory } from '../api';
 
 interface Props {
   isOpen: boolean;
@@ -8,9 +8,18 @@ interface Props {
 }
 
 export function AiInspectorModal({ isOpen, onClose }: Props) {
-  const [activeTab, setActiveTab] = useState<'status' | 'severity' | 'intent' | 'postmortem'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'arena' | 'memory' | 'severity' | 'intent' | 'postmortem'>('status');
   const [statusData, setStatusData] = useState<AiStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState<boolean>(false);
+
+  // Model Arena state
+  const [arenaScenario, setArenaScenario] = useState('payment_timeout');
+  const [arenaResult, setArenaResult] = useState<any | null>(null);
+  const [arenaLoading, setArenaLoading] = useState(false);
+
+  // Vector Memory state
+  const [memoryData, setMemoryData] = useState<{ total_indexed_incidents: number; records: any[] } | null>(null);
+  const [memoryLoading, setMemoryLoading] = useState(false);
 
   // Severity tester state
   const [sevService, setSevService] = useState('payment-service');
@@ -111,6 +120,40 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
     }
   };
 
+  const handleRunArena = async (scenarioKey?: string) => {
+    const sc = scenarioKey || arenaScenario;
+    setArenaLoading(true);
+    try {
+      const res = await runModelArena({ scenario: sc });
+      setArenaResult(res);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setArenaLoading(false);
+    }
+  };
+
+  const handleLoadMemory = async () => {
+    setMemoryLoading(true);
+    try {
+      const res = await fetchVectorMemory();
+      setMemoryData(res);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setMemoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'arena' && !arenaResult) {
+      handleRunArena('payment_timeout');
+    }
+    if (activeTab === 'memory' && !memoryData) {
+      handleLoadMemory();
+    }
+  }, [activeTab]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
@@ -125,7 +168,7 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
       }}
     >
       <div
-        className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#111622] border border-[#1E2738]"
+        className="w-full max-w-5xl max-h-[92vh] flex flex-col rounded-xl overflow-hidden shadow-2xl bg-[#111622] border border-[#1E2738]"
       >
         {/* Modal Header */}
         <div className="px-6 py-4 flex items-center justify-between border-b border-[#1E2738] bg-[#0E131E]">
@@ -138,14 +181,14 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-white">
-                  AI Model Inspector &amp; Live Diagnostic Studio
+                  AI Model Inspector &amp; Diagnostic Studio
                 </h3>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                   CONNECTED
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Inspect real-time Google Gemini LLM inference, latency metrics, and reasoning chains
+                Model Arena Benchmarks, Episodic Vector Memory, and Live LLM Reasoning Chains
               </p>
             </div>
           </div>
@@ -166,9 +209,11 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-[#1E2738] px-6 pt-2 bg-[#0B0E14] gap-2">
+        <div className="flex border-b border-[#1E2738] px-6 pt-2 bg-[#0B0E14] gap-2 overflow-x-auto">
           {[
-            { id: 'status', label: 'Model Status & Health' },
+            { id: 'status', label: 'Overview & Status' },
+            { id: 'arena', label: '⚔️ Model Arena (7B vs Gemini)' },
+            { id: 'memory', label: '📚 Episodic Vector Memory' },
             { id: 'severity', label: 'Severity Classifier' },
             { id: 'intent', label: 'Intent Parser (NLU)' },
             { id: 'postmortem', label: 'Postmortem Generator' },
@@ -176,7 +221,7 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`pb-2.5 px-3 text-xs font-medium transition-colors border-b-2 cursor-pointer ${
+              className={`pb-2.5 px-3 text-xs font-medium transition-colors border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'text-white border-blue-500 font-semibold'
                   : 'text-slate-400 hover:text-slate-200 border-transparent'
@@ -276,7 +321,217 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
             </div>
           )}
 
-          {/* TAB 2: SEVERITY TESTER */}
+          {/* TAB 2: MODEL ARENA BENCHMARK */}
+          {activeTab === 'arena' && (
+            <div className="space-y-6">
+              <div className="p-4 rounded-lg bg-[#151C2C] border border-[#1E2738] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <span>⚔️</span> Model Arena: Custom Fine-Tuned 7B vs. Gemini 3.5 Flash
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Side-by-side benchmark comparing your fine-tuned domain SRE model against general frontier LLMs on exact telemetry.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <select
+                    value={arenaScenario}
+                    onChange={(e) => {
+                      setArenaScenario(e.target.value);
+                      handleRunArena(e.target.value);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-[#0B0E14] border border-[#1E2738] text-xs text-white focus:outline-none focus:border-blue-500 font-mono cursor-pointer"
+                  >
+                    <option value="payment_timeout">💳 Stripe Gateway Timeout (Payment)</option>
+                    <option value="db_pool_exhaustion">🗄️ PostgreSQL Pool Exhaustion (Checkout)</option>
+                    <option value="redis_oom">⚡ Redis Memory Eviction Spike (Cache)</option>
+                  </select>
+                  <button
+                    onClick={() => handleRunArena()}
+                    disabled={arenaLoading}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {arenaLoading ? 'Evaluating...' : '⚡ Re-Run Benchmark'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Benchmark Result Cards */}
+              {arenaResult && (
+                <div className="space-y-4 animate-fadeIn">
+                  {/* Verdict Banner */}
+                  <div className="p-3 rounded-lg bg-gradient-to-r from-purple-900/30 via-blue-900/20 to-purple-900/30 border border-purple-500/40 text-xs text-purple-200 flex items-center gap-3">
+                    <span className="text-lg">🎯</span>
+                    <div>
+                      <p className="font-semibold text-white">SRE Model Arena Verdict</p>
+                      <p className="text-slate-300 mt-0.5">{arenaResult.verdict}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Model A: Fine-Tuned 7B */}
+                    <div className="p-4 rounded-xl bg-[#0E131E] border-2 border-purple-500/50 shadow-lg relative overflow-hidden">
+                      <div className="absolute top-0 right-0 bg-purple-600 text-[10px] font-bold uppercase tracking-wider text-white px-3 py-1 rounded-bl-lg">
+                        Domain Fine-Tuned (7B)
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-3 h-3 rounded-full bg-purple-400" />
+                        <h5 className="text-xs font-bold text-white font-mono">{arenaResult.model_a.model_name}</h5>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 font-mono text-[11px]">
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">Latency</span>
+                          <span className="text-emerald-400 font-bold">{arenaResult.model_a.latency_ms} ms</span>
+                        </div>
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">Token Cost</span>
+                          <span className="text-emerald-400 font-bold">$0.00</span>
+                        </div>
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">SRE Precision</span>
+                          <span className="text-purple-400 font-bold">{arenaResult.model_a.sre_precision_score}%</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <span className="text-slate-400 text-[11px] block mb-1">Severity Classification &amp; Override:</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-300 border border-red-500/40">
+                            {arenaResult.model_a.severity} (CLUSTERING OVERRIDE ENFORCED)
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-purple-300 font-semibold block mb-1">Diagnosis &amp; Historical Citation:</span>
+                          <p className="text-slate-300 font-mono text-[11px] leading-relaxed">
+                            {arenaResult.model_a.reasoning}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded bg-[#151C2C] border border-emerald-500/30">
+                          <span className="text-emerald-400 font-semibold block mb-1">Synthesized Code Fix / Action:</span>
+                          <p className="text-emerald-200 font-mono text-[11px] leading-relaxed">
+                            {arenaResult.model_a.recommended_fix}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Model B: Baseline Frontier LLM */}
+                    <div className="p-4 rounded-xl bg-[#0E131E] border border-[#1E2738] relative overflow-hidden">
+                      <div className="absolute top-0 right-0 bg-slate-700 text-[10px] font-bold uppercase tracking-wider text-slate-300 px-3 py-1 rounded-bl-lg">
+                        Baseline General LLM
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-3 h-3 rounded-full bg-blue-400" />
+                        <h5 className="text-xs font-bold text-white font-mono">{arenaResult.model_b.model_name}</h5>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4 font-mono text-[11px]">
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">Latency</span>
+                          <span className="text-slate-300 font-bold">{arenaResult.model_b.latency_ms} ms</span>
+                        </div>
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">Token Cost</span>
+                          <span className="text-amber-400 font-bold">{arenaResult.model_b.cost_per_million}</span>
+                        </div>
+                        <div className="p-2 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 block text-[10px]">SRE Precision</span>
+                          <span className="text-blue-400 font-bold">{arenaResult.model_b.sre_precision_score}%</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <span className="text-slate-400 text-[11px] block mb-1">Severity Classification:</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-500/20 text-orange-300 border border-orange-500/40">
+                            {arenaResult.model_b.severity}
+                          </span>
+                        </div>
+
+                        <div className="p-3 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-blue-300 font-semibold block mb-1">General Reasoning:</span>
+                          <p className="text-slate-300 font-mono text-[11px] leading-relaxed">
+                            {arenaResult.model_b.reasoning}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded bg-[#151C2C] border border-[#1E2738]">
+                          <span className="text-slate-400 font-semibold block mb-1">General Recommendation:</span>
+                          <p className="text-slate-300 font-mono text-[11px] leading-relaxed">
+                            {arenaResult.model_b.recommended_fix}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: VECTOR MEMORY */}
+          {activeTab === 'memory' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-[#151C2C] border border-[#1E2738] flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <span>📚</span> Long-Term Episodic Vector Memory (Incident RAG)
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Past postmortems and resolutions indexed as semantic vector embeddings to inject precedents into active incident triage.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#0B0E14] border border-[#1E2738] text-purple-300">
+                    Indexed: <strong>{memoryData?.total_indexed_incidents || 0} Incidents</strong>
+                  </span>
+                  <button
+                    onClick={handleLoadMemory}
+                    disabled={memoryLoading}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors cursor-pointer"
+                  >
+                    {memoryLoading ? 'Refreshing...' : '↻ Refresh Memory'}
+                  </button>
+                </div>
+              </div>
+
+              {memoryData && (
+                <div className="space-y-3">
+                  {memoryData.records.map((rec: any, idx: number) => (
+                    <div key={idx} className="p-4 rounded-lg bg-[#0E131E] border border-[#1E2738] text-xs space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-white">{rec.title}</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                            {rec.service}
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/30 font-mono">
+                          {rec.severity}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 font-mono text-[11px]">
+                        <div className="p-2.5 rounded bg-[#111622] border border-[#1E2738]">
+                          <span className="text-purple-300 font-semibold block mb-1">Root Cause:</span>
+                          <p className="text-slate-300">{rec.root_cause}</p>
+                        </div>
+                        <div className="p-2.5 rounded bg-[#111622] border border-[#1E2738]">
+                          <span className="text-emerald-400 font-semibold block mb-1">Resolution Applied:</span>
+                          <p className="text-emerald-200">{rec.resolution}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: SEVERITY TESTER */}
           {activeTab === 'severity' && (
             <div className="space-y-4">
               <div>

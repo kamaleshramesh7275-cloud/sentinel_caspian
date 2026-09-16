@@ -114,3 +114,43 @@ export async function fetchActivities(
   return apiFetch(`/activities?${params.toString()}`);
 }
 
+export async function generateIncidentPatch(
+  incidentId: string,
+  customInstructions?: string
+): Promise<any> {
+  return apiFetch(`/incidents/${incidentId}/generate-patch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ custom_instructions: customInstructions }),
+  });
+}
+
+export async function commitIncidentPatch(
+  incidentId: string,
+  patchData: any
+): Promise<any> {
+  return apiFetch(`/incidents/${incidentId}/commit-patch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ patch_data: patchData }),
+  });
+}
+
+export async function runModelArena(payload: {
+  scenario?: string;
+  error_signature?: string;
+  stack_trace?: string;
+  service?: string;
+}): Promise<any> {
+  return apiFetch('/ai/arena-compare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchVectorMemory(): Promise<{ total_indexed_incidents: number; records: any[] }> {
+  return apiFetch('/ai/vector-memory');
+}
+
+

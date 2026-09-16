@@ -251,3 +251,97 @@ async def get_incident_timeline(
     result = await db.execute(stmt)
     entries = result.scalars().all()
     return [ThreadContextOut.model_validate(e) for e in entries]
+
+
+# ── Feature 1: Time-Travel Outage Simulation Endpoint ─────────────────────────
+
+from app.schemas import (
+    CascadeSimulationResponse,
+    SpeculativeHealResponse,
+    ChaosExperimentResponse,
+)
+from app.agents.simulator_agent import simulate_outage_cascade
+from app.agents.speculative_patch_agent import run_speculative_healing
+from app.agents.chaos_agent import generate_chaos_experiment
+
+
+@router.post(
+    "/incidents/{incident_id}/simulate-cascade",
+    response_model=CascadeSimulationResponse,
+    tags=["SRE Innovations"],
+)
+async def endpoint_simulate_cascade(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Feature 1: Autoregressive 30-Minute Outage Cascade Simulator.
+    Forecasts failure escalation across T+5m, T+15m, and T+30m horizons.
+    """
+    stmt = select(Incident).where(Incident.id == incident_id)
+    result = await db.execute(stmt)
+    incident = result.scalar_one_or_none()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    ev_stmt = select(Event).where(Event.incident_id == incident_id).order_by(Event.received_at.desc())
+    ev_result = await db.execute(ev_stmt)
+    events = ev_result.scalars().all()
+
+    simulation = await simulate_outage_cascade(incident=incident, events=events)
+    return simulation
+
+
+@router.post(
+    "/incidents/{incident_id}/speculative-heal",
+    response_model=SpeculativeHealResponse,
+    tags=["SRE Innovations"],
+)
+async def endpoint_speculative_heal(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Feature 3: Speculative Self-Healing in Isolated Shadow Sandboxes.
+    Generates a patch, executes tests in a safe container sandbox, and computes safety confidence.
+    """
+    stmt = select(Incident).where(Incident.id == incident_id)
+    result = await db.execute(stmt)
+    incident = result.scalar_one_or_none()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    ev_stmt = select(Event).where(Event.incident_id == incident_id).order_by(Event.received_at.desc())
+    ev_result = await db.execute(ev_stmt)
+    events = ev_result.scalars().all()
+
+    healing_result = await run_speculative_healing(incident=incident, events=events)
+    return healing_result
+
+
+@router.post(
+    "/incidents/{incident_id}/chaos-experiment",
+    response_model=ChaosExperimentResponse,
+    tags=["SRE Innovations"],
+)
+async def endpoint_chaos_experiment(
+    incident_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Feature 5: Autonomous Chaos Engineering Test Generator.
+    Synthesizes Chaos Mesh / Litmus YAML and Locust load scripts from resolved postmortems.
+    """
+    stmt = select(Incident).where(Incident.id == incident_id)
+    result = await db.execute(stmt)
+    incident = result.scalar_one_or_none()
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+
+    ev_stmt = select(Event).where(Event.incident_id == incident_id).order_by(Event.received_at.desc())
+    ev_result = await db.execute(ev_stmt)
+    events = ev_result.scalars().all()
+
+    chaos_res = await generate_chaos_experiment(incident=incident, events=events)
+    return chaos_res
+

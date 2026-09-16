@@ -142,3 +142,54 @@ class TriggerIncidentResponse(BaseModel):
     action: str = "created"
     message: str
 
+
+# ── Innovative SRE Schemas ───────────────────────────────────────────────────
+
+class SimulationTimelineStep(BaseModel):
+    horizon: str
+    status: str
+    affected_services: list[str]
+    projected_state: str
+    failure_probability: float
+
+
+class CascadeSimulationResponse(BaseModel):
+    simulation_id: str
+    incident_title: str
+    mtto_minutes: int
+    cascade_risk_score: float
+    timeline: list[SimulationTimelineStep]
+    preemptive_circuit_breaker_recommendation: str
+
+
+class SandboxVerificationDetails(BaseModel):
+    verified_safe: bool
+    safety_confidence_score: float
+    reproduced_error: bool
+    tests_passed: bool
+    execution_logs: list[str]
+    stdout: Optional[str] = None
+
+
+class SpeculativeHealResponse(BaseModel):
+    incident_id: str
+    target_file: Optional[str] = None
+    fault_summary: Optional[str] = None
+    root_cause: Optional[str] = None
+    git_diff: Optional[str] = None
+    fixed_code_snippet: Optional[str] = None
+    regression_tests: Optional[list[str]] = None
+    sandbox_verification: SandboxVerificationDetails
+    deployment_status: str
+
+
+class ChaosExperimentResponse(BaseModel):
+    experiment_name: str
+    target_service: str
+    chaos_type: str
+    hypothesis: str
+    chaos_crd_yaml: str
+    locust_traffic_script: str
+    verification_assertions: list[str]
+
+

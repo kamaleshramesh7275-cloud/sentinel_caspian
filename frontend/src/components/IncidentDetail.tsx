@@ -3,7 +3,7 @@ import { Incident } from '../types';
 import { timeAgo, SeverityBadge, StatusDot } from './IncidentCard';
 import { TimelinePanel } from './TimelinePanel';
 import { EngineerReplySimulator } from './EngineerReplySimulator';
-import { executeRemediation } from '../api';
+import { executeRemediation, generateIncidentPatch, commitIncidentPatch } from '../api';
 
 interface MetaItemProps {
   icon: React.ReactNode;
@@ -45,6 +45,40 @@ export function IncidentDetail({
   timelineKey,
 }: Props) {
   const [remediating, setRemediating] = useState(false);
+
+  // Autonomous Code Patch state
+  const [patchGenerating, setPatchGenerating] = useState(false);
+  const [patchData, setPatchData] = useState<any | null>(null);
+  const [patchCommitting, setPatchCommitting] = useState(false);
+  const [committedPatchUrl, setCommittedPatchUrl] = useState<string | null>(null);
+
+  const handleGeneratePatch = async () => {
+    setPatchGenerating(true);
+    try {
+      const res = await generateIncidentPatch(incident.id);
+      setPatchData(res);
+      onSuccess('Code Patch Synthesized', `Target: ${res.target_file}`);
+    } catch (err: any) {
+      onError('Patch generation failed', err.message);
+    } finally {
+      setPatchGenerating(false);
+    }
+  };
+
+  const handleCommitPatch = async () => {
+    if (!patchData) return;
+    setPatchCommitting(true);
+    try {
+      const res = await commitIncidentPatch(incident.id, patchData);
+      setCommittedPatchUrl(res.github_url);
+      onSuccess('Patch Committed to GitHub', res.target_file);
+      onUpdate();
+    } catch (err: any) {
+      onError('Patch commit failed', err.message);
+    } finally {
+      setPatchCommitting(false);
+    }
+  };
 
   const handleRemediate = async () => {
     setRemediating(true);
@@ -218,6 +252,110 @@ export function IncidentDetail({
           </div>
         </div>
       )}
+
+      {/* Autonomous Code Patch Agent (7B Coder) */}
+      <div className="rounded-xl p-4 bg-[#141828] border border-purple-500/30 space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wide flex items-center gap-1.5">
+              <span>🛠️</span> Autonomous Code Patch Agent (Fine-Tuned 7B Coder)
+            </h4>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Inspects stack traces, analyzes failure mechanics, and synthesizes a unified git diff patch to commit to GitHub.
+            </p>
+          </div>
+
+          <button
+            onClick={handleGeneratePatch}
+            disabled={patchGenerating}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 transition-colors cursor-pointer shrink-0 disabled:opacity-50 shadow-sm"
+          >
+            {patchGenerating ? 'Synthesizing Patch...' : patchData ? '↻ Re-Generate Patch' : '⚡ Generate Code Patch'}
+          </button>
+        </div>
+
+        {/* Patch Result & Diff Viewer */}
+        {patchData && (
+          <div className="p-3.5 rounded-lg bg-[#0B0E14] border border-purple-500/40 space-y-3 text-xs animate-fadeIn font-mono">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Target File:</span>
+                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 font-bold">
+                  {patchData.target_file}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Confidence:</span>
+                <span className="text-emerald-400 font-bold">
+                  {Math.round((patchData.confidence_score || 0.9) * 100)}%
+                </span>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-300 bg-[#111622] p-2.5 rounded border border-[#1E2738]">
+              <span className="text-purple-300 font-semibold block mb-0.5">Defect Analysis:</span>
+              <p className="text-slate-300">{patchData.root_cause || patchData.fault_summary}</p>
+            </div>
+
+            {/* Git Diff Block */}
+            <div className="space-y-1">
+              <span className="text-slate-400 text-[10px] uppercase font-semibold tracking-wider block">Unified Git Diff</span>
+              <pre className="p-3 rounded-lg bg-[#070A0F] border border-slate-800 text-[11px] text-slate-300 overflow-x-auto leading-relaxed whitespace-pre font-mono">
+                {patchData.git_diff.split('\n').map((line: string, i: number) => {
+                  let colorClass = 'text-slate-300';
+                  if (line.startsWith('+') && !line.startsWith('+++')) colorClass = 'text-emerald-400 bg-emerald-950/30';
+                  else if (line.startsWith('-') && !line.startsWith('---')) colorClass = 'text-red-400 bg-red-950/30';
+                  else if (line.startsWith('@@') || line.startsWith('---') || line.startsWith('+++')) colorClass = 'text-cyan-400 font-bold';
+                  return (
+                    <div key={i} className={`px-1 rounded ${colorClass}`}>
+                      {line}
+                    </div>
+                  );
+                })}
+              </pre>
+            </div>
+
+            {/* Regression Test Suggestions */}
+            {patchData.regression_tests?.length > 0 && (
+              <div className="text-[11px]">
+                <span className="text-amber-300 font-semibold block mb-1">Recommended Regression Tests:</span>
+                <ul className="list-disc list-inside text-slate-400 space-y-0.5">
+                  {patchData.regression_tests.map((t: string, idx: number) => (
+                    <li key={idx} className="truncate">{t}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Commit to GitHub Action */}
+            <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-3">
+              {committedPatchUrl ? (
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <span>✅</span>
+                  <a
+                    href={committedPatchUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-400 hover:underline underline-offset-2 break-all text-xs"
+                  >
+                    View Patch on GitHub ↗
+                  </a>
+                </div>
+              ) : (
+                <p className="text-slate-500 text-[11px]">Patch is ready for repository commit</p>
+              )}
+
+              <button
+                onClick={handleCommitPatch}
+                disabled={patchCommitting}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {patchCommitting ? 'Committing to GitHub...' : '🚀 Commit Patch to GitHub'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Bi-Directional Engineer Reply Simulator */}
       {incident.status !== 'resolved' && (
