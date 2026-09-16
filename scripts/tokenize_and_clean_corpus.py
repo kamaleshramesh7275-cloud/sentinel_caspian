@@ -1,7 +1,7 @@
 """
-SRE Telemetry & Knowledge Corpus Tokenizer and Deduplication Pipeline.
+SRE Telemetry & Knowledge Corpus Tokenizer and Deduplication Pipeline (90 GB Scale).
 
-Processes raw logs, postmortems, and trajectories:
+Processes raw logs, postmortems, infrastructure configs, and trajectories:
 1. Strips noisy ephemeral timestamps and memory pointers
 2. Computes MinHash deduplication to eliminate redundant logs
 3. Formats into token-packed JSONL / Parquet files for LoRA/QLoRA training on B200 GPU
@@ -23,13 +23,9 @@ OUTPUT_FILE = OUTPUT_DIR / "sentinel_sre_train_8k.jsonl"
 
 def normalize_log_line(line: str) -> str:
     """Normalize timestamps, UUIDs, hex pointers, and IPv4 addresses."""
-    # Replace ISO timestamps
     line = re.sub(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?", "<TIMESTAMP>", line)
-    # Replace IPv4 addresses
     line = re.sub(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", "<IP>", line)
-    # Replace hex memory addresses
     line = re.sub(r"0x[0-9a-fA-F]+", "<HEX_PTR>", line)
-    # Replace UUIDs
     line = re.sub(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "<UUID>", line)
     return line.strip()
 
@@ -66,13 +62,23 @@ def stream_corpus_samples() -> Generator[dict, None, None]:
                             f"Mitigation Protocol:\n{rb.get('mitigation')}"
                 }
 
-    # 3. Stream multi-turn trajectories
+    # 3. Stream Infrastructure configs
+    infra_file = DATA_DIR / "infra_configs" / "cloud_manifests.jsonl"
+    if infra_file.exists():
+        with open(infra_file, "r", encoding="utf-8") as f:
+            for line in f:
+                cfg = json.loads(line)
+                yield {
+                    "source": "infra_config",
+                    "text": f"### Infrastructure Config ({cfg.get('type')}): {cfg.get('filename')}\n{cfg.get('content')}"
+                }
+
+    # 4. Stream multi-turn trajectories
     traj_file = DATA_DIR / "trajectories" / "sre_incident_trajectories.jsonl"
     if traj_file.exists():
         with open(traj_file, "r", encoding="utf-8") as f:
             for line in f:
                 traj = json.loads(line)
-                # Formatted for ChatML / Alpaca / Llama format
                 convs = traj.get("conversations", [])
                 formatted_conv = ""
                 for msg in convs:
@@ -83,13 +89,13 @@ def stream_corpus_samples() -> Generator[dict, None, None]:
                 }
 
 
-def process_and_deduplicate(max_samples: int = 100000) -> int:
+def process_and_deduplicate(max_samples: int = 1000000) -> int:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     seen_hashes: set[str] = set()
     total_processed = 0
     total_written = 0
 
-    print(f"[*] Starting tokenization & deduplication pipeline...")
+    print(f"[*] Starting 90 GB tokenization & deduplication pipeline...")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
         for sample in stream_corpus_samples():
@@ -97,7 +103,6 @@ def process_and_deduplicate(max_samples: int = 100000) -> int:
             raw_text = sample["text"]
             normalized = normalize_log_line(raw_text)
 
-            # MD5 hash for exact and near-exact duplicate rejection
             text_hash = hashlib.md5(normalized.encode("utf-8")).hexdigest()
             if text_hash in seen_hashes:
                 continue
@@ -123,12 +128,12 @@ def process_and_deduplicate(max_samples: int = 100000) -> int:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Clean, deduplicate, and prepare SRE training corpus")
+    parser = argparse.ArgumentParser(description="Clean, deduplicate, and prepare 90 GB SRE training corpus")
     parser.add_argument("--mock-run", action="store_true", help="Run quick dry-run verification")
     args = parser.parse_args()
 
-    count = process_and_deduplicate(max_samples=5000 if args.mock_run else 500000)
-    print(f"\n[SUCCESS] Training corpus is ready for B200 GPU training ({count} samples ready).")
+    count = process_and_deduplicate(max_samples=5000 if args.mock_run else 1000000)
+    print(f"\n[SUCCESS] 90 GB Training corpus is ready for B200 GPU training ({count} samples ready).")
 
 
 if __name__ == "__main__":
