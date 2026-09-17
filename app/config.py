@@ -12,12 +12,16 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/sentinel"
 
-    # LLM — supports any OpenAI-compatible API (OpenAI, Gemini, Groq, etc.)
+    # LLM — supports any OpenAI-compatible API (Custom SRE 14B, Hugging Face, Gemini, vLLM, Ollama)
     openai_api_key: Optional[str] = None
-    openai_model: str = "gemini-2.0-flash"
-    # Set this to use Gemini free tier:
-    # https://generativelanguage.googleapis.com/v1beta/openai/
+    openai_model: str = "kamaleshkumarR/sentinell"
+    # Set this to use Gemini, local vLLM (http://localhost:8000/v1), Ollama, or HF router
     openai_base_url: Optional[str] = None
+
+    # Hugging Face SRE Foundation Model
+    hf_token: Optional[str] = None
+    hf_model_id: str = "kamaleshkumarR/sentinell"
+    hf_inference_url: str = "https://api-inference.huggingface.co/v1"
 
     # Caspian
     caspian_api_key: Optional[str] = None

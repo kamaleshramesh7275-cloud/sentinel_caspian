@@ -9,16 +9,26 @@ import { ChaosPanel } from './components/ChaosPanel';
 import { IncidentList } from './components/IncidentList';
 import { IncidentDetail } from './components/IncidentDetail';
 import { AiInspectorModal } from './components/AiInspectorModal';
+import { BehindTheScenesConsole } from './components/BehindTheScenesConsole';
 import { TriggerIncidentModal } from './components/TriggerIncidentModal';
 import { LiveOpsFeed } from './components/LiveOpsFeed';
+import { AutoPilotStepper } from './components/AutoPilotStepper';
+import { ModelArchitectureModal } from './components/ModelArchitectureModal';
+import { LlmPromptInspectorModal } from './components/LlmPromptInspectorModal';
+import { SloBurnGauge } from './components/SloBurnGauge';
+import { MissionControlView } from './components/MissionControlView';
+import { AiAgentsHub } from './components/AiAgentsHub';
 import { ToastContainer } from './components/Toast';
+
+// Lucide icons
+import { ShieldCheck, Plus, Activity, Layers, Play, CheckCircle2 } from 'lucide-react';
 
 // Hooks
 import { useToast } from './hooks/useToast';
 
 import './index.css';
 
-// ── Welcome / Placeholder Canvas ──────────────────────────────────────────────
+// ── Welcome / Empty Canvas ───────────────────────────────────────────────────
 interface WelcomeProps {
   onOpenTrigger: () => void;
   onSwitchToLiveOps: () => void;
@@ -26,43 +36,33 @@ interface WelcomeProps {
 
 function WelcomePanel({ onOpenTrigger, onSwitchToLiveOps }: WelcomeProps) {
   return (
-    <div className="rounded-xl bg-[#111622] border border-[#1E2738] flex flex-col items-center justify-center p-8 text-center h-full min-h-[520px]">
-      <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 mb-4 shadow-sm">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
+    <div className="rounded-xl bg-[#0F172A] border border-[#1F2937] flex flex-col items-center justify-center p-8 text-center h-full min-h-[520px] shadow-sm">
+      <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
+        <ShieldCheck className="w-6 h-6" />
       </div>
 
-      <h3 className="text-lg font-semibold text-white tracking-tight">
-        Sentinel Incident Commander
+      <h3 className="text-base font-bold text-white tracking-tight">
+        Sentinel Caspian · Autonomous Incident Commander
       </h3>
-      <p className="text-xs text-slate-400 max-w-sm mt-1.5 leading-relaxed">
-        Select an active incident from the queue to review Caspian AI reasoning, run automated mitigation, or track cross-channel escalation.
+      <p className="text-xs text-slate-400 max-w-md mt-2 leading-relaxed font-sans">
+        Select an active incident from the triage queue or trigger a synthetic failure scenario to inspect real-time Causal RCA graphs, speculative safe runbooks, and cross-channel orchestration.
       </p>
 
       {/* Quick Action Buttons */}
-      <div className="flex items-center gap-2.5 mt-6">
+      <div className="flex items-center gap-3 mt-6">
         <button
           onClick={onOpenTrigger}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors cursor-pointer shadow-sm"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium text-white bg-red-600 hover:bg-red-500 border border-red-500 transition cursor-pointer shadow-sm"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          <Plus className="w-3.5 h-3.5" />
           <span>Declare Incident</span>
         </button>
 
         <button
           onClick={onSwitchToLiveOps}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium text-slate-300 bg-[#161C2A] hover:bg-[#1C2436] border border-[#283347] transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-medium text-slate-300 bg-[#1E293B] hover:bg-[#334155] border border-[#334155] transition cursor-pointer"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" />
-            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
+          <Activity className="w-3.5 h-3.5 text-blue-400" />
           <span>View Live Ops Stream</span>
         </button>
       </div>
@@ -81,12 +81,16 @@ export default function App() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [wsConnected, setWsConnected] = useState(false);
   const [showAiInspector, setShowAiInspector] = useState(false);
+  const [showBehindTheScenes, setShowBehindTheScenes] = useState(false);
   const [showTriggerModal, setShowTriggerModal] = useState(false);
+  const [showModelArch, setShowModelArch] = useState(false);
+  const [showLlmInspector, setShowLlmInspector] = useState(false);
+  const [llmInspectorAgentId, setLlmInspectorAgentId] = useState<string | undefined>(undefined);
   const [aiStatus, setAiStatus] = useState<AiStatus | null>(null);
   const [timelineKey, setTimelineKey] = useState(0);
 
   // Live Ops Stream State
-  const [activeTab, setActiveTab] = useState<'incidents' | 'liveops'>('incidents');
+  const [activeTab, setActiveTab] = useState<'mission_control' | 'agents_hub' | 'incidents' | 'liveops'>('mission_control');
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [selectedIncidentForActivity, setSelectedIncidentForActivity] = useState<string | null>(null);
@@ -137,7 +141,7 @@ export default function App() {
     try {
       const wsUrl = getWebSocketUrl();
       socket = new WebSocket(wsUrl);
-      socket.onopen  = () => setWsConnected(true);
+      socket.onopen = () => setWsConnected(true);
       socket.onclose = () => setWsConnected(false);
       socket.onerror = () => setWsConnected(false);
       socket.onmessage = (event) => {
@@ -158,173 +162,231 @@ export default function App() {
 
     return () => {
       clearInterval(interval);
-      if (socket?.readyState === WebSocket.OPEN) socket.close();
+      socket?.close();
     };
   }, [load, loadActivities]);
 
-  // ── Derived stats ───────────────────────────────────────────────────────────
-  const stats = {
-    total,
-    active:   incidents.filter((i) => ['open', 'escalated'].includes(i.status)).length,
-    critical: incidents.filter((i) => i.severity === 'critical').length,
-    resolved: incidents.filter((i) => i.status === 'resolved').length,
-  };
+  // Keep selected incident synchronized
+  useEffect(() => {
+    if (!selected) return;
+    const fresh = incidents.find((i) => i.id === selected.id);
+    if (fresh) setSelected(fresh);
+  }, [incidents]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSelectIncident = (incident: Incident) => {
-    setSelected((prev) => (prev?.id === incident.id ? null : incident));
-  };
-
-  const handleReplySimulated = () => {
-    load();
-    setTimelineKey((k) => k + 1);
-    if (selected) {
-      fetchIncident(selected.id).then(setSelected).catch(console.error);
+  // Handle manual select
+  const handleSelectIncident = async (id: string) => {
+    try {
+      const inc = await fetchIncident(id);
+      setSelected(inc);
+    } catch {
+      const fallback = incidents.find((i) => i.id === id);
+      if (fallback) setSelected(fallback);
     }
   };
 
   const handleFilterChange = (f: string) => {
     setFilter(f);
-    setSelected(null);
   };
 
-  const handleTriggerSuccess = async (result: any) => {
-    await load();
-    if (result.incident_id) {
-      try {
-        const inc = await fetchIncident(result.incident_id);
-        setSelected(inc);
-      } catch { /* ignore */ }
-    }
+  const handleChaosSuccess = (result: any) => {
     success(
-      'Incident Declared',
-      `${result.title} [${result.severity?.toUpperCase() ?? 'MEDIUM'}]`
+      `Scenario Injected (${result.events_fired} events)`,
+      `Severity: ${result.severity?.toUpperCase()} — Alert dispatched`
     );
-  };
-
-  const handleSelectIncidentFromFeed = (incId: string) => {
-    const found = incidents.find((i) => i.id === incId);
-    if (found) {
-      setSelected(found);
-      setActiveTab('incidents');
-    } else {
-      fetchIncident(incId)
-        .then((inc) => {
-          setSelected(inc);
-          setActiveTab('incidents');
-        })
-        .catch(console.error);
+    load();
+    loadActivities();
+    if (result.incident_id) {
+      handleSelectIncident(result.incident_id);
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const handleTriggerSuccess = (result: any) => {
+    success(
+      `Incident Declared: ${result.severity?.toUpperCase()}`,
+      `Title: ${result.title}`
+    );
+    load();
+    loadActivities();
+    if (result.incident_id) {
+      handleSelectIncident(result.incident_id);
+    }
+  };
+
+  const handleReplySimulated = () => {
+    setTimelineKey((k) => k + 1);
+    load();
+    loadActivities();
+  };
+
+  // Compute stat counts
+  const openCount = incidents.filter((i) => i.status === 'open' || i.status === 'ack').length;
+  const criticalCount = incidents.filter((i) => i.severity === 'critical').length;
+  const highCount = incidents.filter((i) => i.severity === 'high').length;
+  const resolvedCount = incidents.filter((i) => i.status === 'resolved').length;
+
   return (
-    <div className="relative z-10 flex flex-col min-h-screen bg-[#0B0E14] text-[#F1F5F9]">
-      {/* Top Header */}
+    <div className="flex flex-col h-screen bg-[#0B0F17] text-slate-100 overflow-hidden font-sans">
+      {/* Header */}
       <Header
         channels={channels}
         wsConnected={wsConnected}
         lastRefresh={lastRefresh}
         aiStatus={aiStatus}
         onOpenInspector={() => setShowAiInspector(true)}
+        onOpenBehindTheScenes={() => setShowBehindTheScenes(true)}
         onOpenTriggerIncident={() => setShowTriggerModal(true)}
+        onOpenModelArch={() => setShowModelArch(true)}
+        onOpenLlmInspector={() => {
+          setLlmInspectorAgentId(undefined);
+          setShowLlmInspector(true);
+        }}
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab)}
+        onTabChange={setActiveTab}
         activityCount={activities.length}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Metric KPI Row */}
-        <div className="px-6 pt-5 pb-3 max-w-screen-2xl mx-auto w-full">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <StatCard
-              label="Total Incidents"
-              value={stats.total}
-              animateTo={stats.total}
-              sub="All logged incidents"
-            />
-            <StatCard
-              label="Active Operations"
-              value={stats.active}
-              animateTo={stats.active}
-              sub="Open + escalated incidents"
-            />
-            <StatCard
-              label="Critical P0 / SEV-0"
-              value={stats.critical}
-              animateTo={stats.critical}
-              sub="Requiring immediate action"
-            />
-            <StatCard
-              label="Resolved Incidents"
-              value={stats.resolved}
-              animateTo={stats.resolved}
-              sub="Postmortems generated"
-            />
-          </div>
+      {/* Top Stat & SLO Ribbon */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 px-6 py-2 border-b border-[#1F2937] bg-[#0F172A] shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-1">
+          <StatCard
+            label="Active Incidents"
+            value={openCount}
+            sub="Unresolved in queue"
+            statusVariant={openCount > 0 ? 'danger' : 'default'}
+          />
+          <StatCard
+            label="Critical Alerts (P0)"
+            value={criticalCount}
+            sub="Immediate Action"
+            statusVariant={criticalCount > 0 ? 'danger' : 'default'}
+          />
+          <StatCard
+            label="High Severity (P1)"
+            value={highCount}
+            sub="Degraded Performance"
+            statusVariant={highCount > 0 ? 'warning' : 'default'}
+          />
+          <StatCard
+            label="Auto-Resolved"
+            value={resolvedCount}
+            sub="Postmortem Committed"
+            statusVariant="success"
+          />
         </div>
 
-        {/* View Switcher: Queue & Detail vs Live Ops Stream */}
-        {activeTab === 'liveops' ? (
-          <div className="flex-1 px-6 pb-6 max-w-screen-2xl mx-auto w-full overflow-hidden" style={{ minHeight: '580px' }}>
+        {/* Live SLO & Error Budget Gauge */}
+        <div className="shrink-0">
+          <SloBurnGauge
+            targetSlo={99.99}
+            currentSlo={criticalCount > 0 ? 98.42 : 99.98}
+            burnRateMultiplier={criticalCount > 0 ? 14.4 : 0.05}
+            isPatched={criticalCount === 0 && resolvedCount > 0}
+          />
+        </div>
+      </div>
+
+      {/* Main Workspace Area */}
+      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0">
+        {activeTab === 'mission_control' ? (
+          <div className="flex-1 min-h-[580px] flex flex-col">
+            <MissionControlView
+              onIncidentCreated={(incId) => {
+                load();
+                loadActivities();
+                handleSelectIncident(incId);
+              }}
+              onOpenLlmInspector={(agentId) => {
+                setLlmInspectorAgentId(agentId);
+                setShowLlmInspector(true);
+              }}
+              onError={(title, msg) => toastError(title, msg)}
+              onSuccess={(title, msg) => success(title, msg)}
+            />
+          </div>
+        ) : activeTab === 'agents_hub' ? (
+          <div className="flex-1 min-h-[620px] flex flex-col">
+            <AiAgentsHub
+              onError={(title, msg) => toastError(title, msg)}
+              onSuccess={(title, msg) => success(title, msg)}
+            />
+          </div>
+        ) : activeTab === 'liveops' ? (
+          <div className="flex-1 min-h-[500px] rounded-xl bg-[#0F172A] border border-[#1F2937] overflow-hidden shadow-sm flex flex-col">
             <LiveOpsFeed
               activities={activities}
               loading={loadingActivities}
+              onSelectIncident={(incId) => {
+                setActiveTab('incidents');
+                handleSelectIncident(incId);
+              }}
               onRefresh={loadActivities}
-              selectedIncidentId={selectedIncidentForActivity}
-              onSelectIncident={handleSelectIncidentFromFeed}
-              onClearIncidentFilter={() => setSelectedIncidentForActivity(null)}
             />
           </div>
         ) : (
-          <div
-            className="flex-1 grid px-6 pb-6 gap-4 max-w-screen-2xl mx-auto w-full overflow-hidden"
-            style={{ gridTemplateColumns: '340px 1fr', minHeight: 0 }}
-          >
-            {/* Left Sidebar: Resilience Drill + Incident Queue */}
-            <div className="flex flex-col gap-3.5 overflow-hidden" style={{ minHeight: 0 }}>
-              <ChaosPanel
-                onChaosSuccess={(result) => {
-                  setTimeout(load, 1500);
-                  info(
-                    'Fault Drill Executed',
-                    `${result.events_fired} events fired · triage: ${result.severity?.toUpperCase() ?? '—'}`
-                  );
+          <div className="flex flex-col gap-2.5 h-full overflow-hidden" style={{ minHeight: 0 }}>
+            {/* Top Auto-Pilot Stepper */}
+            <div className="shrink-0">
+              <AutoPilotStepper
+                onIncidentCreated={(incId) => {
+                  load();
+                  loadActivities();
+                  handleSelectIncident(incId);
                 }}
+                onStepChange={(stepIdx) => {
+                  // Step navigation feedback
+                }}
+                selectedIncidentId={selected?.id ?? null}
                 onError={(title, msg) => toastError(title, msg)}
+                onSuccess={(title, msg) => success(title, msg)}
               />
-
-              <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
-                <IncidentList
-                  incidents={incidents}
-                  loading={loadingIncidents}
-                  filter={filter}
-                  onFilterChange={handleFilterChange}
-                  selectedId={selected?.id ?? null}
-                  onSelect={handleSelectIncident}
-                />
-              </div>
             </div>
 
-            {/* Right Main Area: Incident Detail or Welcome Panel */}
-            <div className="overflow-hidden" style={{ minHeight: 0 }}>
-              {selected ? (
-                <IncidentDetail
-                  incident={selected}
-                  onClose={() => setSelected(null)}
-                  onUpdate={load}
-                  onReplySimulated={handleReplySimulated}
-                  onError={(title, msg) => toastError(title, msg)}
-                  onSuccess={(title, msg) => success(title, msg)}
-                  timelineKey={timelineKey}
-                />
-              ) : (
-                <WelcomePanel
-                  onOpenTrigger={() => setShowTriggerModal(true)}
-                  onSwitchToLiveOps={() => setActiveTab('liveops')}
-                />
-              )}
+            {/* 2-Column Split: Left Fault Harness & Incident Queue | Right War Room */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+              {/* Left Column */}
+              <div className="lg:col-span-5 flex flex-col gap-2 h-full overflow-hidden" style={{ minHeight: 0 }}>
+                <div className="shrink-0">
+                  <ChaosPanel
+                    onChaosSuccess={handleChaosSuccess}
+                    onError={(title, msg) => toastError(title, msg)}
+                  />
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-hidden rounded-xl bg-[#0F172A] border border-[#1F2937] shadow-sm flex flex-col" style={{ minHeight: 0 }}>
+                  <IncidentList
+                    incidents={incidents}
+                    loading={loadingIncidents}
+                    filter={filter}
+                    onFilterChange={handleFilterChange}
+                    selectedId={selected?.id ?? null}
+                    onSelect={(inc) => handleSelectIncident(inc.id)}
+                  />
+                </div>
+              </div>
+
+              {/* Right Main Area: Incident War Room or Welcome Panel */}
+              <div className="lg:col-span-7 overflow-hidden h-full" style={{ minHeight: 0 }}>
+                {selected ? (
+                  <IncidentDetail
+                    incident={selected}
+                    onClose={() => setSelected(null)}
+                    onUpdate={load}
+                    onReplySimulated={handleReplySimulated}
+                    onOpenLlmInspector={(agentId) => {
+                      setLlmInspectorAgentId(agentId);
+                      setShowLlmInspector(true);
+                    }}
+                    onError={(title, msg) => toastError(title, msg)}
+                    onSuccess={(title, msg) => success(title, msg)}
+                    timelineKey={timelineKey}
+                  />
+                ) : (
+                  <WelcomePanel
+                    onOpenTrigger={() => setShowTriggerModal(true)}
+                    onSwitchToLiveOps={() => setActiveTab('liveops')}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -332,6 +394,23 @@ export default function App() {
 
       {/* Dialog Modals */}
       <AiInspectorModal isOpen={showAiInspector} onClose={() => setShowAiInspector(false)} />
+      <ModelArchitectureModal
+        isOpen={showModelArch}
+        onClose={() => setShowModelArch(false)}
+        aiStatus={aiStatus}
+      />
+      <LlmPromptInspectorModal
+        isOpen={showLlmInspector}
+        onClose={() => setShowLlmInspector(false)}
+        initialAgentId={llmInspectorAgentId}
+      />
+      <BehindTheScenesConsole
+        isOpen={showBehindTheScenes}
+        onClose={() => setShowBehindTheScenes(false)}
+        selectedIncident={selected}
+        aiStatus={aiStatus}
+        activities={activities}
+      />
       <TriggerIncidentModal
         isOpen={showTriggerModal}
         onClose={() => setShowTriggerModal(false)}

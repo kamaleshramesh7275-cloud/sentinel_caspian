@@ -18,10 +18,9 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 import httpx
-from openai import AsyncOpenAI
-
 from app.config import settings
 from app.models import Event, Incident
+from app.services.sre_llm_provider import sre_llm
 
 logger = logging.getLogger("sentinel.patch_agent")
 
@@ -91,32 +90,12 @@ async def generate_code_patch(
 Return strictly JSON matching the required schema."""
 
     try:
-        client = AsyncOpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url or None,
-        )
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
+        patch_data = await sre_llm.generate_json(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=user_message,
             temperature=0.2,
             max_tokens=2000,
-            response_format={"type": "json_object"},
         )
-        raw = response.choices[0].message.content.strip()
-
-        # Extract JSON cleanly
-        json_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', raw)
-        if json_match:
-            raw = json_match.group(1).strip()
-        else:
-            brace_match = re.search(r'(\{[\s\S]*\})', raw)
-            if brace_match:
-                raw = brace_match.group(1).strip()
-
-        patch_data = json.loads(raw)
 
         from app.services.activity_logger import activity_logger
         await activity_logger.log_activity(

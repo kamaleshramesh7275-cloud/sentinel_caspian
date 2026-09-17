@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentinel Caspian 14B — SRE Foundation Model</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            dark: {
+              950: '#090d16',
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+            },
+            accent: {
+              cyan: '#06b6d4',
+              indigo: '#6366f1',
+              emerald: '#10b981',
+              amber: '#f59e0b',
+              rose: '#f43f5e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: radial-gradient(circle at 50% 0%, #172554 0%, #090d16 65%);
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.3);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.35);
+    }
+    .pulse-dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-8">
+
+    <!-- Header & Hero -->
+    <header class="glass-card rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 glow-indigo">
+      <div class="space-y-2">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-2xl">
+            🛡️
+          </div>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-cyan-400 bg-clip-text text-transparent">
+              Sentinel Caspian 14B SRE
+            </h1>
+            <p class="text-xs md:text-sm text-slate-400">Autonomous Incident Commander & Causal SRE Foundation Model</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 pt-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 pulse-dot"></span> Trained on NVIDIA Blackwell B200
+          </span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+            Qwen2.5-14B + LoRA (r=128, α=256)
+          </span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+            NF4 Quantized (2.1 GB)
+          </span>
+          <span class="px-2.5 py-1 rounded-full text-xs font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            SRE-Bench 100% Fix Rate
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 w-full md:w-auto">
+        <a href="https://huggingface.co/kamaleshkumarR/sentinell" target="_blank" class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all">
+          <span>🤗 Model Hub</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card rounded-xl p-4 border-l-4 border-l-cyan-500">
+        <div class="text-xs text-slate-400 font-medium">Training Corpus</div>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1">76.01 GB</div>
+        <div class="text-xs text-cyan-400 mt-1">18.925B Tokens (ChatML)</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border-l-4 border-l-indigo-500">
+        <div class="text-xs text-slate-400 font-medium">Adapter Weight</div>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1">2.1 GB</div>
+        <div class="text-xs text-indigo-300 mt-1">550M trainable params</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border-l-4 border-l-emerald-500">
+        <div class="text-xs text-slate-400 font-medium">Training Loss</div>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1">0.2049</div>
+        <div class="text-xs text-emerald-400 mt-1">Perplexity: 1.227</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border-l-4 border-l-rose-500">
+        <div class="text-xs text-slate-400 font-medium">Safety Score</div>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1">0.96 / 1.0</div>
+        <div class="text-xs text-rose-300 mt-1">10k DPO Guardrail Pairs</div>
+      </div>
+    </div>
+
+    <!-- Main Interactive Playground -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Incident Controls -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>⚡ Select Outage Scenario</span>
+          </h2>
+          <p class="text-xs text-slate-400">Trigger multi-system incident simulations to see how the 14B model reasons in real time.</p>
+
+          <div class="space-y-2 pt-2">
+            <button onclick="loadScenario('db_pool')" id="btn-db" class="w-full text-left p-3.5 rounded-xl border border-indigo-500/40 bg-indigo-950/40 hover:bg-indigo-900/40 text-sm font-medium transition flex items-center justify-between">
+              <div>
+                <div class="text-white font-semibold flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-rose-500"></span> Postgres Pool Exhaustion
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5">checkout-api • Connection pool 100/100</div>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">CRITICAL</span>
+            </button>
+
+            <button onclick="loadScenario('redis_oom')" id="btn-redis" class="w-full text-left p-3.5 rounded-xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/40 text-sm font-medium transition flex items-center justify-between">
+              <div>
+                <div class="text-white font-semibold flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-amber-500"></span> Redis Cluster OOM Cascade
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5">cache-cluster • eviction policy none</div>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">HIGH</span>
+            </button>
+
+            <button onclick="loadScenario('k8s_flap')" id="btn-k8s" class="w-full text-left p-3.5 rounded-xl border border-slate-700/60 bg-slate-900/40 hover:bg-slate-800/40 text-sm font-medium transition flex items-center justify-between">
+              <div>
+                <div class="text-white font-semibold flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-cyan-500"></span> K8s Pod CrashLoopBackOff
+                </div>
+                <div class="text-xs text-slate-400 mt-0.5">auth-service • JVM Heap OOM</div>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">CRITICAL</span>
+            </button>
+          </div>
+
+          <div class="pt-4 border-t border-slate-800">
+            <button onclick="runInference()" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 transition">
+              <span id="infer-spinner" class="hidden animate-spin">🔄</span>
+              <span>Run Autonomous SRE Reasoning</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- System Architecture Box -->
+        <div class="glass-card rounded-2xl p-6 space-y-3">
+          <h3 class="text-sm font-bold text-slate-300">Architecture Features</h3>
+          <ul class="text-xs space-y-2 text-slate-400">
+            <li class="flex items-start gap-2">
+              <span class="text-cyan-400">✔</span>
+              <span><strong>Causal RCA Graph:</strong> Constructs root-cause DAGs without hallucinating.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-indigo-400">✔</span>
+              <span><strong>Speculative Shadow Sandbox:</strong> Synthesizes non-destructive RFC remediation steps.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400">✔</span>
+              <span><strong>Time-Travel Simulator:</strong> Calculates Mean Time to Outage (MTTO).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-rose-400">✔</span>
+              <span><strong>Chaos Synthesizer:</strong> Generates Chaos Mesh CRD manifests.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Model Output Tabs -->
+      <div class="lg:col-span-8 space-y-6">
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <!-- Tab Navigation -->
+          <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
+            <div class="flex items-center gap-2">
+              <button onclick="setTab('rca')" id="tab-rca" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white">1. Causal RCA & Severity</button>
+              <button onclick="setTab('remediation')" id="tab-remediation" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">2. Safe RFC Remediation</button>
+              <button onclick="setTab('timetravel')" id="tab-timetravel" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">3. Cascade Simulator</button>
+              <button onclick="setTab('chaos')" id="tab-chaos" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">4. Chaos Mesh CRD</button>
+            </div>
+            <span class="text-xs text-slate-500 font-mono">14B SRE Reasoning Engine</span>
+          </div>
+
+          <!-- Tab Content 1: RCA & Severity -->
+          <div id="content-rca" class="space-y-4">
+            <div class="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Calculated Severity:</span>
+                <span id="out-sev" class="px-2.5 py-0.5 rounded text-xs font-bold font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">CRITICAL</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Clustering Override:</span>
+                <span id="out-override" class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/20 text-amber-300">TRIGGERED (+1 Level)</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-bold text-slate-300 mb-1">Causal Directed Acyclic Graph (Root Cause Path):</div>
+              <div id="out-dag" class="p-4 rounded-xl bg-slate-950 font-mono text-xs text-cyan-300 border border-slate-800 space-y-1">
+                <div>[Client Request Burst] ──► [Unindexed Query: SELECT * FROM orders WHERE user_id=...]</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► [Exclusive Table Lock &gt; 5000ms]</div>
+                <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► [Max Connection Pool Saturation (100/100)]</div>
+                <div class="text-rose-400 font-bold">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► [💥 CRITICAL ROOT CAUSE: PostgreSQL Connection Starvation]</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-bold text-slate-300 mb-1">Model Agent Reasoning:</div>
+              <div id="out-reasoning" class="p-3.5 rounded-xl bg-slate-900/80 text-xs text-slate-300 border border-slate-800 leading-relaxed font-sans">
+                PostgreSQL database connection pool has hit 100% capacity due to 42 blocked queries waiting on lock acquisition. Recurring signature detected 3 times in sliding 20m window — CLUSTERING OVERRIDE TRIGGERED from HIGH to CRITICAL. Immediate connection drainage required.
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content 2: Speculative Remediation -->
+          <div id="content-remediation" class="hidden space-y-3">
+            <div class="text-xs font-bold text-slate-300">Speculative RFC Remediation Sequence (Zero Hallucinated Destructive Commands):</div>
+            <div id="out-remediation" class="space-y-2">
+              <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+                <div class="text-cyan-400 font-bold">Step 1 (Pre-Flight Verification):</div>
+                <div class="text-slate-300">SELECT count(*), state FROM pg_stat_activity GROUP BY state;</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+                <div class="text-emerald-400 font-bold">Step 2 (Non-Destructive Mitigation):</div>
+                <div class="text-slate-300">SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '1 minute';</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+                <div class="text-indigo-400 font-bold">Step 3 (Capacity Auto-Tuning):</div>
+                <div class="text-slate-300">ALTER SYSTEM SET idle_in_transaction_session_timeout = '15s'; SELECT pg_reload_conf();</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content 3: Time-Travel Cascade -->
+          <div id="content-timetravel" class="hidden space-y-3">
+            <div class="text-xs font-bold text-slate-300">Cascade Simulation & Mean Time to Outage (MTTO):</div>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-400">Predicted MTTO:</span>
+                <span id="out-mtto" class="text-rose-400 font-bold font-mono">~3.2 minutes remaining</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 h-full w-3/4"></div>
+              </div>
+              <div class="text-slate-300 space-y-1 font-mono text-[11px]">
+                <div>• T+0s: Database Pool Exhaustion (checkout-api)</div>
+                <div>• T+45s: HTTP 504 Gateway Timeouts cascade to payment-service</div>
+                <div>• T+120s: Cart checkout queue exceeds Redis backpressure limit</div>
+                <div class="text-rose-400 font-semibold">• T+190s: Full user checkout outage across all regions</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content 4: Chaos Mesh -->
+          <div id="content-chaos" class="hidden space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-xs font-bold text-slate-300">Synthesized Chaos Mesh Experiment (Resilience Assertion):</div>
+              <button onclick="copyChaos()" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono">📋 Copy YAML</button>
+            </div>
+            <pre id="out-chaos" class="p-4 rounded-xl bg-slate-950 text-cyan-300 text-xs font-mono overflow-x-auto border border-slate-800">
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: postgres-pool-latency-test
+  namespace: default
+spec:
+  action: delay
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: postgres-primary
+  delay:
+    latency: '800ms'
+    jitter: '100ms'
+  duration: '60s'
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-500 py-4 border-t border-slate-800">
+      Built for <strong>Sentinel Caspian SRE AI</strong> • Model: <code>kamaleshkumarR/sentinell</code> • Trained on NVIDIA Blackwell B200 GPU
+    </footer>
+
+  </div>
+
+  <script>
+    const scenarios = {
+      db_pool: {
+        btn: 'btn-db',
+        sev: 'CRITICAL',
+        override: 'TRIGGERED (+1 Level)',
+        dag: `[Client Request Burst] ──► [Unindexed Query: SELECT * FROM orders WHERE user_id=...]
+                        └──► [Exclusive Table Lock > 5000ms]
+                             └──► [Max Connection Pool Saturation (100/100)]
+                                  └──► [💥 CRITICAL ROOT CAUSE: PostgreSQL Connection Starvation]`,
+        reasoning: `PostgreSQL database connection pool has hit 100% capacity due to 42 blocked queries waiting on lock acquisition. Recurring signature detected 3 times in sliding 20m window — CLUSTERING OVERRIDE TRIGGERED from HIGH to CRITICAL. Immediate connection drainage required.`,
+        remediation: `
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-cyan-400 font-bold">Step 1 (Pre-Flight Verification):</div>
+            <div class="text-slate-300">SELECT count(*), state FROM pg_stat_activity GROUP BY state;</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-emerald-400 font-bold">Step 2 (Non-Destructive Mitigation):</div>
+            <div class="text-slate-300">SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction' AND state_change < now() - INTERVAL '1 minute';</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-indigo-400 font-bold">Step 3 (Capacity Auto-Tuning):</div>
+            <div class="text-slate-300">ALTER SYSTEM SET idle_in_transaction_session_timeout = '15s'; SELECT pg_reload_conf();</div>
+          </div>
+        `,
+        mtto: '~3.2 minutes remaining',
+        chaos: `apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: postgres-pool-latency-test
+  namespace: default
+spec:
+  action: delay
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: postgres-primary
+  delay:
+    latency: '800ms'
+    jitter: '100ms'
+  duration: '60s'`
+      },
+      redis_oom: {
+        btn: 'btn-redis',
+        sev: 'HIGH',
+        override: 'NONE (Threshold 2/3)',
+        dag: `[Telemetry Payload Size Surge] ──► [Unbounded Session Key Growth]
+                               └──► [Redis maxmemory-policy=noeviction]
+                                    └──► [💥 ROOT CAUSE: Redis OOM Command Rejection]`,
+        reasoning: `Redis cache cluster reached 98.4% memory utilization with policy 'noeviction'. Keys are not expiring due to missing TTL on user cart tokens. Severity assessed as HIGH.`,
+        remediation: `
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-cyan-400 font-bold">Step 1 (Verify Memory Stats):</div>
+            <div class="text-slate-300">redis-cli -h cache-cluster info memory</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-emerald-400 font-bold">Step 2 (Hot Policy Shift):</div>
+            <div class="text-slate-300">redis-cli -h cache-cluster CONFIG SET maxmemory-policy volatile-lru</div>
+          </div>
+        `,
+        mtto: '~8.5 minutes remaining',
+        chaos: `apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: redis-memory-saturation
+  namespace: default
+spec:
+  mode: one
+  selector:
+    labelSelectors:
+      app: redis-cache
+  stressors:
+    memory:
+      workers: 2
+      size: '2GB'`
+      },
+      k8s_flap: {
+        btn: 'btn-k8s',
+        sev: 'CRITICAL',
+        override: 'TRIGGERED (5+ Restarts)',
+        dag: `[Heavy Traffic Spike] ──► [JVM Max Heap 512MB Exceeded]
+                         └──► [Container cgroups OOMKilled]
+                              └──► [CrashLoopBackOff Exit Code 137]
+                                   └──► [💥 CRITICAL ROOT CAUSE: Auth Pod Flapping]`,
+        reasoning: `Auth service pods flapping with exit code 137 (OOMKill). Pod restart count > 8 in 10 minutes. Causal analysis indicates JVM heap memory configuration is below the required baseline.`,
+        remediation: `
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-cyan-400 font-bold">Step 1 (Inspect Pod Events):</div>
+            <div class="text-slate-300">kubectl describe pod -l app=auth-service -n default</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono space-y-1">
+            <div class="text-emerald-400 font-bold">Step 2 (Tune JVM Heap Limits):</div>
+            <div class="text-slate-300">kubectl set env deployment/auth-service JAVA_OPTS="-Xmx2048m -XX:+UseG1GC"</div>
+          </div>
+        `,
+        mtto: '~1.5 minutes remaining',
+        chaos: `apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: auth-pod-kill-test
+  namespace: default
+spec:
+  action: pod-kill
+  mode: fixed
+  value: '1'
+  selector:
+    labelSelectors:
+      app: auth-service`
+      }
+    };
+
+    let currentScenario = 'db_pool';
+
+    function loadScenario(key) {
+      currentScenario = key;
+      ['btn-db', 'btn-redis', 'btn-k8s'].forEach(b => {
+        document.getElementById(b).classList.remove('border-indigo-500/40', 'bg-indigo-950/40');
+        document.getElementById(b).classList.add('border-slate-700/60', 'bg-slate-900/40');
+      });
+      document.getElementById(scenarios[key].btn).classList.add('border-indigo-500/40', 'bg-indigo-950/40');
+      document.getElementById(scenarios[key].btn).classList.remove('border-slate-700/60', 'bg-slate-900/40');
+
+      const data = scenarios[key];
+      document.getElementById('out-sev').innerText = data.sev;
+      document.getElementById('out-override').innerText = data.override;
+      document.getElementById('out-dag').innerText = data.dag;
+      document.getElementById('out-reasoning').innerText = data.reasoning;
+      document.getElementById('out-remediation').innerHTML = data.remediation;
+      document.getElementById('out-mtto').innerText = data.mtto;
+      document.getElementById('out-chaos').innerText = data.chaos;
+    }
+
+    function runInference() {
+      const spinner = document.getElementById('infer-spinner');
+      spinner.classList.remove('hidden');
+      setTimeout(() => {
+        spinner.classList.add('hidden');
+        loadScenario(currentScenario);
+      }, 350);
+    }
+
+    function setTab(tab) {
+      ['rca', 'remediation', 'timetravel', 'chaos'].forEach(t => {
+        document.getElementById('content-' + t).classList.add('hidden');
+        document.getElementById('tab-' + t).classList.remove('bg-indigo-600', 'text-white');
+        document.getElementById('tab-' + t).classList.add('text-slate-400');
+      });
+      document.getElementById('content-' + tab).classList.remove('hidden');
+      document.getElementById('tab-' + tab).classList.add('bg-indigo-600', 'text-white');
+      document.getElementById('tab-' + tab).classList.remove('text-slate-400');
+    }
+
+    function copyChaos() {
+      const text = document.getElementById('out-chaos').innerText;
+      navigator.clipboard.writeText(text);
+      alert('Chaos Mesh YAML copied to clipboard!');
+    }
+  </script>
+</body>
+</html>

@@ -14,10 +14,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import httpx
-from openai import AsyncOpenAI
-
 from app.config import settings
 from app.models import Incident, ThreadContext
+from app.services.sre_llm_provider import sre_llm
 
 logger = logging.getLogger("sentinel.postmortem_agent")
 
@@ -117,20 +116,12 @@ Full timeline:
 {timeline_text}"""
 
     try:
-        client = AsyncOpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url or None,
-        )
-        response = await client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
+        markdown_content = await sre_llm.generate_reasoning(
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=user_message,
             temperature=0.3,
             max_tokens=2000,
         )
-        markdown_content = response.choices[0].message.content.strip()
 
         logger.info(f"[PostmortemAgent] Generated postmortem for incident {incident.id} ({len(markdown_content)} chars)")
 

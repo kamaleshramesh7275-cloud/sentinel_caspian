@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { simulateReply } from '../api';
 import { SimulateReplyResult } from '../types';
+import { MessageSquare, Send, CheckCircle2, Search, CornerDownLeft, AlertCircle } from 'lucide-react';
 
 interface Props {
   incidentId: string;
@@ -57,20 +58,18 @@ export function EngineerReplySimulator({ incidentId, incidentStatus, onReplySimu
   };
 
   return (
-    <div className="rounded-xl p-4 bg-[#111622] border border-[#1E2738] space-y-3.5 shadow-sm">
+    <div className="rounded-xl p-4 bg-[#111827] border border-[#1F2937] space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+          <div className="w-6 h-6 rounded-md bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <MessageSquare className="w-3.5 h-3.5" />
           </div>
           <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wide">
-            Bi-Directional Chat &amp; Intent Simulator
+            Bi-Directional ChatOps Responder Bridge
           </h4>
         </div>
         <span className="text-[10px] text-slate-400 font-mono">
-          Slack / Telegram Inbound
+          Slack / Telegram / PagerDuty Inbound
         </span>
       </div>
 
@@ -80,10 +79,10 @@ export function EngineerReplySimulator({ incidentId, incidentStatus, onReplySimu
 
       {/* Preset quick replies */}
       <div className="space-y-1.5">
-        <span className="text-[11px] font-medium text-slate-400 block">
+        <span className="text-[11px] font-medium text-slate-400 block font-mono">
           Quick Response Scenarios:
         </span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {presets.map((p, idx) => (
             <button
               key={idx}
@@ -92,7 +91,7 @@ export function EngineerReplySimulator({ incidentId, incidentStatus, onReplySimu
                 setMessage(p.text);
                 handleSend(p.text);
               }}
-              className={`text-xs px-2.5 py-1 rounded-md border font-medium transition-colors cursor-pointer disabled:opacity-50 ${p.color}`}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium transition cursor-pointer disabled:opacity-50 ${p.color}`}
             >
               {p.label}
             </button>
@@ -100,73 +99,55 @@ export function EngineerReplySimulator({ incidentId, incidentStatus, onReplySimu
         </div>
       </div>
 
-      {/* Input row */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Type custom response (e.g. 'I drained the connection pool, metrics back to normal')..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          className="flex-1 px-3 py-1.5 rounded-lg bg-[#0B0E14] border border-[#1E2738] text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
-        />
-        <button
-          onClick={() => handleSend()}
-          disabled={loading || !message.trim()}
-          className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors cursor-pointer disabled:opacity-50"
-        >
-          {loading ? 'Evaluating…' : 'Send'}
-        </button>
+      {/* Input box */}
+      <div className="space-y-2 pt-1">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={sender}
+            onChange={(e) => setSender(e.target.value)}
+            placeholder="Responder Name"
+            className="w-1/3 text-xs px-3 py-1.5 rounded-md bg-[#0B0F19] border border-[#1F2937] text-slate-200 focus:outline-none focus:border-blue-500 font-mono"
+          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Type responder reply (e.g. 'Looking into DB locks now')..."
+              className="w-full text-xs px-3 py-1.5 pr-8 rounded-md bg-[#0B0F19] border border-[#1F2937] text-slate-200 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              disabled={loading || !message.trim()}
+              onClick={() => handleSend()}
+              className="absolute right-1.5 top-1.5 text-slate-400 hover:text-white disabled:opacity-40 cursor-pointer"
+            >
+              <CornerDownLeft className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-1 text-xs text-red-400 font-mono">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Intent Feedback */}
+        {lastResult && (
+          <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between font-mono animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>
+                Intent: <strong>{lastResult.intent.toUpperCase()}</strong> · Action: <strong>{lastResult.action_taken.toUpperCase()}</strong>
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400">Escalations Suppressed</span>
+          </div>
+        )}
       </div>
-
-      {/* Result Card */}
-      {lastResult && (
-        <div className="p-3 rounded-lg bg-[#0E131E] border border-blue-500/30 space-y-2 text-xs animate-fadeIn">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-200 font-medium">
-              Parsed Intent: <strong className="text-blue-400 uppercase">{lastResult.intent}</strong>
-            </span>
-            {lastResult.confidence !== undefined && (
-              <span className="text-emerald-400 text-[11px] font-mono">
-                {Math.round(lastResult.confidence * 100)}% confidence
-              </span>
-            )}
-          </div>
-
-          {lastResult.reasoning && (
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              <span className="text-purple-300 font-medium">Model Reasoning: </span>
-              {lastResult.reasoning}
-            </p>
-          )}
-
-          {lastResult.follow_up_question && (
-            <p className="text-amber-300 bg-amber-500/10 p-2 rounded border border-amber-500/30 text-[11px]">
-              <strong>Clarification prompt:</strong> {lastResult.follow_up_question}
-            </p>
-          )}
-
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Action: {lastResult.action_taken}</span>
-            {lastResult.action_taken.includes('http') && (
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                ✓ Postmortem committed to GitHub
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-2.5 rounded bg-red-500/10 border border-red-500/30 text-xs text-red-300">
-          Error: {error}
-        </div>
-      )}
     </div>
   );
 }

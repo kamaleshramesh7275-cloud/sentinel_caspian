@@ -107,6 +107,7 @@ class ChaosResponse(BaseModel):
     incident_id: Optional[uuid.UUID]
     severity: Optional[str]
     agent_reasoning: Optional[str]
+    llm_telemetry: Optional[dict[str, Any]] = None
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────
@@ -160,6 +161,7 @@ class CascadeSimulationResponse(BaseModel):
     cascade_risk_score: float
     timeline: list[SimulationTimelineStep]
     preemptive_circuit_breaker_recommendation: str
+    llm_telemetry: Optional[dict[str, Any]] = None
 
 
 class SandboxVerificationDetails(BaseModel):
@@ -181,6 +183,7 @@ class SpeculativeHealResponse(BaseModel):
     regression_tests: Optional[list[str]] = None
     sandbox_verification: SandboxVerificationDetails
     deployment_status: str
+    llm_telemetry: Optional[dict[str, Any]] = None
 
 
 class ChaosExperimentResponse(BaseModel):
@@ -191,5 +194,55 @@ class ChaosExperimentResponse(BaseModel):
     chaos_crd_yaml: str
     locust_traffic_script: str
     verification_assertions: list[str]
+    llm_telemetry: Optional[dict[str, Any]] = None
 
+
+class LocalPatchApplyResponse(BaseModel):
+    success: bool
+    target_file: str
+    status: str
+    message: str
+    test_results: dict[str, Any]
+
+
+class TestRunResponse(BaseModel):
+    passed: bool
+    exit_code: int
+    test_suite: str
+    terminal_output: str
+    summary: str
+
+
+class AgentLiveTelemetryRequest(BaseModel):
+    agent_id: str = Field(..., description="Target agent: 'rca' | 'sandbox' | 'timetravel' | 'chaos'")
+    incident_id: Optional[str] = Field(None, description="Optional incident UUID")
+    execute_live: bool = Field(default=False, description="Whether to trigger live LLM/Pytest inference")
+    case_id: Optional[str] = Field(default="payment_db_leak", description="Outage case: 'payment_db_leak' | 'redis_cache_stampede' | 'worker_oom_leak' | 'webhook_retry_storm' | 'custom_repo'")
+    custom_code: Optional[str] = Field(default=None, description="Arbitrary Python code for custom repo analysis")
+    custom_error: Optional[str] = Field(default=None, description="Arbitrary error trace for custom repo analysis")
+
+
+class TokenCount(BaseModel):
+    prompt: int
+    completion: int
+    total: int
+
+
+class AgentLiveTelemetryResponse(BaseModel):
+    agent_id: str
+    name: str
+    subtitle: str
+    role: str
+    status: str
+    latency_ms: float
+    temperature: float
+    token_count: TokenCount
+    system_prompt: str
+    injected_telemetry_prompt: str
+    raw_output: str
+    schema_type: str
+    timestamp: str
+    case_id: Optional[str] = None
+    target_file: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimelineEntry } from '../types';
 import { fetchTimeline } from '../api';
+import { Bot, User, Radio, MessageSquare, Send, Mail, Clock } from 'lucide-react';
 
 function formatTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('en-US', {
@@ -31,13 +32,12 @@ function SkeletonEntry() {
   return (
     <div className="flex gap-3">
       <div className="flex flex-col items-center">
-        <div className="skeleton w-7 h-7 rounded-full shrink-0" />
+        <div className="skeleton w-6 h-6 rounded-full shrink-0" />
         <div className="w-px flex-1 mt-1 bg-slate-800" />
       </div>
-      <div className="pb-5 flex-1">
-        <div className="skeleton h-3 w-32 mb-2 rounded" />
+      <div className="pb-4 flex-1">
+        <div className="skeleton h-3 w-28 mb-2 rounded" />
         <div className="skeleton h-3 w-full mb-1 rounded" />
-        <div className="skeleton h-3 w-4/5 rounded" />
       </div>
     </div>
   );
@@ -64,16 +64,15 @@ export function TimelinePanel({ incidentId }: Props) {
       <div className="space-y-2 pt-1">
         <SkeletonEntry />
         <SkeletonEntry />
-        <SkeletonEntry />
       </div>
     );
   }
 
   if (!entries.length) {
     return (
-      <div className="text-center py-8 text-slate-500">
+      <div className="text-center py-6 text-slate-500 font-sans">
         <p className="text-xs font-medium">No cross-channel timeline events logged yet</p>
-        <p className="text-[11px] text-slate-600 mt-1">
+        <p className="text-[11px] text-slate-500 mt-0.5">
           Inbound and outbound messages will synchronize here automatically
         </p>
       </div>
@@ -82,6 +81,11 @@ export function TimelinePanel({ incidentId }: Props) {
 
   return (
     <div className="space-y-1">
+      <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1.5 font-mono">
+        <Clock className="w-3.5 h-3.5 text-slate-400" />
+        <span>Incident Timeline &amp; Escalation Log</span>
+      </div>
+
       {entries.map((entry, idx) => {
         const isSystem = entry.sender === 'system' || entry.sender === 'sentinel-agent';
         const isLast = idx === entries.length - 1;
@@ -91,37 +95,45 @@ export function TimelinePanel({ incidentId }: Props) {
             key={entry.id}
             className="flex gap-3 animate-fadeIn"
           >
-            {/* Avatar node + connecting line */}
+            {/* Avatar node + line */}
             <div className="flex flex-col items-center">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-mono font-bold shrink-0 border ${
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border ${
                 isSystem
                   ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
                   : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
               }`}>
-                {isSystem ? 'AI' : entry.channel.slice(0, 3).toUpperCase()}
+                {isSystem ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
               </div>
-              {!isLast && (
-                <div className="w-px flex-1 mt-1 bg-[#1E2738] min-h-[16px]" />
-              )}
+              {!isLast && <div className="w-px flex-1 my-1 bg-[#1F2937]" />}
             </div>
 
-            {/* Event details */}
-            <div className="pb-4 flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className={`text-xs font-semibold ${isSystem ? 'text-purple-300' : 'text-slate-200'}`}>
-                  {entry.sender}
-                </span>
-                <span className="text-[11px] text-slate-500 font-mono">
-                  {formatTime(entry.created_at)}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700 capitalize">
-                  {entry.channel}
-                </span>
-                {entry.intent_parsed && <IntentPill intent={entry.intent_parsed} />}
+            {/* Content card */}
+            <div className="pb-3 flex-1 min-w-0">
+              <div className="p-3 rounded-lg bg-[#111827] border border-[#1F2937] space-y-1">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-xs text-slate-200">
+                      {isSystem ? 'Sentinel Autonomous Commander' : entry.sender}
+                    </span>
+                    <span className="text-[10px] text-slate-400 px-1.5 py-0.2 rounded bg-black/40 border border-[#1F2937] font-mono capitalize">
+                      {entry.channel}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {entry.intent_parsed && (
+                      <IntentPill intent={entry.intent_parsed} />
+                    )}
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      {formatTime(entry.created_at)}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-wrap">
+                  {entry.message}
+                </p>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-normal bg-[#0B0E14] p-2.5 rounded-lg border border-[#1E2738]">
-                {entry.message}
-              </p>
             </div>
           </div>
         );

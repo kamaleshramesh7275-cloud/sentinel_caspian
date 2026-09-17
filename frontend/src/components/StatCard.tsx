@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AlertCircle, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 interface Props {
   label: string;
   value: number | string;
   sub?: string;
   glow?: string;
-  /** Numeric target to animate counter to. If value is not numeric, no animation. */
   animateTo?: number;
   statusVariant?: 'default' | 'warning' | 'danger' | 'success';
 }
 
-function useCountUp(target: number, duration = 600) {
+function useCountUp(target: number, duration = 400) {
   const [display, setDisplay] = useState(0);
   const frameRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
@@ -25,7 +25,6 @@ function useCountUp(target: number, duration = 600) {
       if (!startRef.current) startRef.current = now;
       const elapsed = now - startRef.current;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(from + (target - from) * eased);
       setDisplay(current);
@@ -50,39 +49,46 @@ export function StatCard({ label, value, sub, statusVariant = 'default', animate
   const animated = useCountUp(numeric ?? 0);
   const displayValue = numeric !== null ? animated : value;
 
-  // Variant indicator
   const hasAlert = numeric !== null && numeric > 0;
-  const isDanger = label.toLowerCase().includes('critical') && hasAlert;
-  const isWarning = label.toLowerCase().includes('active') && hasAlert;
+  const isCritical = label.toLowerCase().includes('critical') && hasAlert;
+  const isHigh = (label.toLowerCase().includes('high') || label.toLowerCase().includes('active')) && hasAlert;
+  const isResolved = label.toLowerCase().includes('resolved') || statusVariant === 'success';
 
   return (
-    <div className={`p-4 rounded-xl border transition-all duration-150 ${
-      isDanger
-        ? 'bg-[#18151D] border-red-900/40 hover:border-red-700/50'
-        : isWarning
-        ? 'bg-[#18181A] border-amber-900/30 hover:border-amber-700/40'
-        : 'bg-[#111622] border-[#1E2738] hover:border-[#2C384F]'
-    }`}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium text-slate-400">{label}</p>
-        {isDanger && (
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+    <div
+      className={`p-3.5 rounded-lg border transition-all ${
+        isCritical
+          ? 'bg-[#181119] border-red-900/40 text-red-100'
+          : isHigh
+          ? 'bg-[#181510] border-amber-900/40 text-amber-100'
+          : 'bg-[#111827] border-[#1F2937] text-slate-100 hover:border-[#374151]'
+      }`}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+          {label}
+        </span>
+        {isCritical && (
+          <ShieldAlert className="w-4 h-4 text-red-400" />
         )}
-        {isWarning && !isDanger && (
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
+        {isHigh && !isCritical && (
+          <AlertTriangle className="w-4 h-4 text-amber-400" />
+        )}
+        {isResolved && (
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
         )}
       </div>
 
       <div className="flex items-baseline gap-2">
-        <p className={`text-2xl font-bold tracking-tight ${
-          isDanger ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-white'
+        <p className={`text-2xl font-bold font-mono tracking-tight ${
+          isCritical ? 'text-red-400' : isHigh ? 'text-amber-400' : isResolved ? 'text-emerald-400' : 'text-white'
         }`}>
           {displayValue}
         </p>
       </div>
 
       {sub && (
-        <p className="text-xs mt-1 text-slate-500 font-normal">
+        <p className="text-[11px] mt-1 text-slate-400 font-normal">
           {sub}
         </p>
       )}

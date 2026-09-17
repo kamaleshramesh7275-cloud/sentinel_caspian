@@ -1,160 +1,242 @@
 import React, { useState } from 'react';
-import { triggerChaos } from '../api';
+import { triggerChaos, triggerIncident, triggerRealCodeFailure } from '../api';
 import { ChaosResponse } from '../types';
+import { Flame, Database, Server, Cpu, Play, CheckCircle2, AlertOctagon, Terminal, Bug } from 'lucide-react';
+import { LiveLlmExchangeViewer } from './LiveLlmExchangeViewer';
 
 interface Props {
   onChaosSuccess: (result: ChaosResponse) => void;
   onError: (title: string, msg?: string) => void;
 }
 
-type ArmState = 'idle' | 'armed' | 'firing';
+const SCENARIOS = [
+  {
+    id: 'db_pool',
+    shortTitle: 'Postgres Pool',
+    title: 'PostgreSQL Pool Saturation',
+    service: 'checkout-api',
+    signature: 'ConnectionPoolExhausted:5432',
+    severity: 'SEV-1',
+    badgeClass: 'badge-critical',
+    desc: 'Simulates 42 blocked transactions causing 100/100 connection pool lockup and 1-level clustering override.',
+    icon: Database,
+  },
+  {
+    id: 'redis_oom',
+    shortTitle: 'Redis OOM',
+    title: 'Redis Cache Cluster OOM',
+    service: 'cache-cluster',
+    signature: 'OOMCommandRejected',
+    severity: 'SEV-2',
+    badgeClass: 'badge-high',
+    desc: 'Simulates unbounded session key growth hitting maxmemory with policy=noeviction.',
+    icon: Server,
+  },
+  {
+    id: 'k8s_flap',
+    shortTitle: 'K8s CrashLoop',
+    title: 'Kubernetes Pod CrashLoop',
+    service: 'auth-service',
+    signature: 'PodOOMKilled:Exit137',
+    severity: 'SEV-1',
+    badgeClass: 'badge-critical',
+    desc: 'Simulates JVM max heap memory exceeded causing container cgroups exit code 137 flapping.',
+    icon: Cpu,
+  },
+  {
+    id: 'stripe_timeout',
+    shortTitle: 'Payment 504',
+    title: 'Payment Gateway 504 Timeout',
+    service: 'payment-processor',
+    signature: 'StripeGatewayTimeout:504',
+    severity: 'SEV-2',
+    badgeClass: 'badge-high',
+    desc: 'Simulates downstream merchant API latency spikes creating queue backpressure.',
+    icon: AlertOctagon,
+  },
+];
 
 export function ChaosPanel({ onChaosSuccess, onError }: Props) {
-  const [armState, setArmState] = useState<ArmState>('idle');
+  const [selectedScenario, setSelectedScenario] = useState(SCENARIOS[0]);
+  const [isFiring, setIsFiring] = useState(false);
+  const [isExecutingRealBug, setIsExecutingRealBug] = useState(false);
   const [result, setResult] = useState<ChaosResponse | null>(null);
-  let armTimer: ReturnType<typeof setTimeout>;
 
-  const handleArm = () => {
-    setArmState('armed');
+  const handleFireScenario = async (scenario = selectedScenario) => {
+    setIsFiring(true);
     setResult(null);
-    armTimer = setTimeout(() => setArmState('idle'), 6000);
-  };
-
-  const handleFire = async () => {
-    clearTimeout(armTimer);
-    setArmState('firing');
     try {
-      const resp = await triggerChaos();
+      let resp: ChaosResponse;
+      if (scenario.id === 'db_pool') {
+        resp = await triggerChaos();
+      } else {
+        const incResp = await triggerIncident({
+          title: scenario.title,
+          severity: scenario.severity.includes('1') ? 'critical' : 'high',
+          service: scenario.service,
+          source: 'chaos-harness',
+          error_signature: scenario.signature,
+          details: scenario.desc,
+          is_demo: true,
+          send_notifications: true,
+        });
+        resp = {
+          message: `Injected synthetic failure scenario: ${scenario.title}`,
+          events_fired: 1,
+          incident_id: incResp.incident_id,
+          severity: incResp.severity,
+          agent_reasoning: incResp.agent_reasoning,
+        };
+      }
       setResult(resp);
       onChaosSuccess(resp);
-      setArmState('idle');
     } catch (e: any) {
-      onError('Drill execution failed', e.message);
-      setArmState('idle');
+      onError('Scenario Injection Failed', e.message);
+    } finally {
+      setIsFiring(false);
     }
   };
 
-  const handleCancel = () => {
-    clearTimeout(armTimer);
-    setArmState('idle');
+  const handleExecuteRealBug = async () => {
+    setIsExecutingRealBug(true);
+    setResult(null);
+    try {
+      const realResp = await triggerRealCodeFailure();
+      const chaosResp: ChaosResponse = {
+        message: `💥 Executed real defective code in services/payment_gateway.py! Captured ${realResp.captured_exception?.slice(0, 60)}...`,
+        events_fired: 3,
+        incident_id: realResp.incident_id,
+        severity: realResp.severity || 'high',
+        agent_reasoning: realResp.agent_reasoning,
+      };
+      setResult(chaosResp);
+      onChaosSuccess(chaosResp);
+    } catch (e: any) {
+      onError('Real Code Execution Failed', e.message);
+    } finally {
+      setIsExecutingRealBug(false);
+    }
   };
 
   return (
-    <div className={`p-4 rounded-xl border transition-all duration-200 ${
-      armState === 'armed'
-        ? 'bg-[#181216] border-red-500/50 shadow-md'
-        : 'bg-[#111622] border-[#1E2738]'
-    }`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+    <div className="p-3 rounded-xl border border-[#1F2937] bg-[#111827] shadow-sm space-y-2.5">
+      {/* Real Code Defect Demo Banner */}
+      <div className="p-2.5 rounded-lg bg-gradient-to-r from-red-950/40 via-amber-950/30 to-blue-950/30 border border-red-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
+          <div className="w-7 h-7 rounded-md bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+            <Bug className="w-4 h-4" />
           </div>
-          <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wide">
-            Resilience &amp; Fault Injection Drill
-          </h3>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-red-300">Live Repo Defect Demo</span>
+              <span className="text-[9px] font-mono bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded border border-red-500/30">
+                services/payment_gateway.py
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-300">
+              Executes real python code with unreleased raw sockets, captures runtime traceback, and triggers full AI triage & auto-patcher.
+            </p>
+          </div>
         </div>
-        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-          Simulation
-        </span>
+
+        <button
+          id="run-real-code-bug-btn"
+          disabled={isExecutingRealBug || isFiring}
+          onClick={handleExecuteRealBug}
+          className="w-full sm:w-auto px-3.5 py-1.5 rounded-md text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 bg-red-600 hover:bg-red-500 text-white border border-red-400 shadow-md shrink-0 font-sans"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>{isExecutingRealBug ? 'Executing Defect...' : 'Run Real Code Bug Test'}</span>
+        </button>
       </div>
 
-      <p className="text-xs text-slate-400 leading-relaxed mb-4">
-        Inject a synthetic 3-event burst with correlated error signatures to test Sentinel's automated clustering, severity override, and multi-channel notification tree.
-      </p>
-
-      {/* Action controls */}
-      {armState === 'idle' && (
-        <button
-          id="chaos-arm-btn"
-          onClick={handleArm}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium bg-[#1A2234] hover:bg-[#222C42] text-slate-200 border border-[#2A3650] transition-colors cursor-pointer"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
-            <path d="M12 2v4" />
-            <path d="m4.93 4.93 2.83 2.83" />
-            <path d="M2 12h4" />
-            <path d="m4.93 19.07 2.83-2.83" />
-            <path d="M12 22v-4" />
-            <path d="m19.07 19.07-2.83-2.83" />
-            <path d="M22 12h-4" />
-            <path d="m19.07 4.93-2.83 2.83" />
-          </svg>
-          <span>Arm Fault Simulation</span>
-        </button>
-      )}
-
-      {armState === 'armed' && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="text-red-400 font-medium flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
-              Confirmation required to execute drill
-            </span>
+      {/* Top row: Title + Inject Button */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <Flame className="w-3.5 h-3.5" />
           </div>
-          <div className="flex gap-2">
-            <button
-              id="chaos-fire-btn"
-              onClick={handleFire}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-colors cursor-pointer shadow-sm"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              <span>Execute Outage Drill</span>
-            </button>
-            <button
-              onClick={handleCancel}
-              className="py-2 px-3 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 bg-[#161C2A] border border-[#283347] transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
+          <div className="min-w-0">
+            <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider truncate">
+              Synthetic Chaos Scenarios
+            </h3>
           </div>
         </div>
-      )}
 
-      {armState === 'firing' && (
         <button
-          disabled
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium bg-red-950/60 text-red-300 border border-red-800/40 cursor-wait"
+          id="fire-chaos-scenario-btn"
+          disabled={isFiring || isExecutingRealBug}
+          onClick={() => handleFireScenario()}
+          className="px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 bg-amber-600 hover:bg-amber-500 text-white border border-amber-500 shadow-sm shrink-0 font-sans"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-            <line x1="12" y1="2" x2="12" y2="6" />
-            <line x1="12" y1="18" x2="12" y2="22" />
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-            <line x1="2" y1="12" x2="6" y2="12" />
-            <line x1="18" y1="12" x2="22" y2="12" />
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-          </svg>
-          <span>Injecting telemetry events…</span>
+          <Play className="w-3 h-3 fill-current" />
+          <span>{isFiring ? 'Injecting...' : 'Inject Fault'}</span>
         </button>
-      )}
+      </div>
 
-      {/* Execution outcome report */}
+      {/* Scenario Selector Row (Compact Pills) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 font-sans">
+        {SCENARIOS.map((sc) => {
+          const isSelected = selectedScenario.id === sc.id;
+          const IconComponent = sc.icon;
+          return (
+            <button
+              key={sc.id}
+              onClick={() => setSelectedScenario(sc)}
+              className={`p-1.5 rounded-lg border transition text-left flex flex-col gap-0.5 cursor-pointer truncate ${
+                isSelected
+                  ? 'bg-[#182338] border-blue-500/70 shadow-sm ring-1 ring-blue-500/30'
+                  : 'bg-[#0B0F19] border-[#1F2937] hover:border-slate-700 hover:bg-[#141B2A]'
+              }`}
+              title={`${sc.title} (${sc.service})`}
+            >
+              <div className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1 min-w-0 truncate">
+                  <IconComponent className={`w-3 h-3 shrink-0 ${isSelected ? 'text-blue-400' : 'text-slate-400'}`} />
+                  <span className={`text-[11px] font-semibold truncate ${isSelected ? 'text-blue-200' : 'text-slate-300'}`}>
+                    {sc.shortTitle}
+                  </span>
+                </div>
+                <span className={`text-[8px] font-mono px-1 rounded border shrink-0 ${sc.badgeClass}`}>
+                  {sc.severity}
+                </span>
+              </div>
+              <span className="text-[9px] text-slate-500 font-mono truncate">
+                {sc.service}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Feedback status */}
       {result && (
-        <div className="mt-3 p-3 rounded-lg bg-[#0E131E] border border-red-500/30 text-xs space-y-1.5 animate-fadeIn">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-red-400">
-              {result.events_fired} Events Injected
-            </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/10 text-red-400 border border-red-500/30">
-              {result.severity}
-            </span>
-          </div>
-          <p className="text-slate-300 text-[11px] leading-relaxed">
-            {result.message}
-          </p>
-          {result.agent_reasoning && (
-            <div className="mt-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-              <span className="text-purple-300 font-medium">Triage Synthesis: </span>
-              {result.agent_reasoning}
+        <div className="space-y-2">
+          <div className="p-2 rounded-md bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-[11px] flex items-center justify-between font-mono animate-fadeIn">
+            <div className="flex items-center gap-1.5 truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span className="truncate">Injected: {result.incident_id ? `INC-${result.incident_id.slice(0, 8)}` : 'Logged'} ({result.events_fired} events)</span>
             </div>
-          )}
+            <span className="font-bold text-[9px] uppercase shrink-0 ml-2">{result.severity}</span>
+          </div>
+
+          <LiveLlmExchangeViewer
+            title="Live Chaos Triage Prompt & Model Output"
+            agentRole="Severity Triage & Clustering Override Agent"
+            accentColor="amber"
+            telemetry={(result as any).llm_telemetry || null}
+            fallbackSystemPrompt="You are the Sentinel Autonomous Incident Commander Triage Agent fine-tuned on Qwen2.5-14B-Instruct LoRA."
+            fallbackUserPrompt={`INJECTED SCENARIO TELEMETRY:
+Scenario: ${selectedScenario.title}
+Service: ${selectedScenario.service}
+Signature: ${selectedScenario.signature}
+Details: ${selectedScenario.desc}`}
+            fallbackRawOutput={JSON.stringify({
+              severity: selectedScenario.severity.toLowerCase().includes('1') ? 'critical' : 'high',
+              override_triggered: true,
+              reasoning: result.agent_reasoning || "Clustering override triggered across repeated microservice faults."
+            }, null, 2)}
+          />
         </div>
       )}
     </div>

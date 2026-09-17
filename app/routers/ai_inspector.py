@@ -24,6 +24,7 @@ from app.agents.severity_agent import run_severity_agent
 from app.agents.intent_parser import parse_intent
 from app.agents.postmortem_agent import generate_postmortem
 from app.models import Event, Incident, ThreadContext
+from app.services.sre_llm_provider import sre_llm
 
 logger = logging.getLogger("sentinel.ai_inspector")
 router = APIRouter(prefix="/ai", tags=["AI Inspector"])
@@ -56,47 +57,23 @@ class AgentTestResponse(BaseModel):
 
 @router.get("/status", response_model=AiStatusResponse)
 async def get_ai_status():
-    """Verify live connectivity and latency to configured AI model (Gemini)."""
-    t0 = time.perf_counter()
-    status = "online"
-    err_msg = None
-
-    client = AsyncOpenAI(
-        api_key=settings.openai_api_key,
-        base_url=settings.openai_base_url or None,
-    )
-
-    try:
-        # Fast lightweight connectivity probe
-        resp = await client.chat.completions.create(
-            model=settings.openai_model,
-            messages=[{"role": "user", "content": "ping"}],
-            max_tokens=5,
-            temperature=0.0,
-        )
-        _ = resp.choices[0].message.content
-    except Exception as e:
-        status = "error"
-        err_msg = str(e)
-        logger.error(f"[AI Inspector] Health probe failed: {e}")
-
-    latency_ms = round((time.perf_counter() - t0) * 1000, 1)
-
-    provider_name = "Google Gemini" if "generativelanguage.googleapis.com" in (settings.openai_base_url or "") else "OpenAI"
+    """Verify live connectivity and latency to configured SRE AI model."""
+    probe = await sre_llm.probe_health()
 
     return AiStatusResponse(
-        status=status,
-        model=settings.openai_model,
-        provider=provider_name,
-        base_url=settings.openai_base_url,
-        latency_ms=latency_ms,
+        status=probe["status"],
+        model=probe["model"],
+        provider=probe["provider"],
+        base_url=probe["base_url"],
+        latency_ms=probe["latency_ms"],
         active_agents=[
-            "Severity Classifier",
-            "Intent Parser",
-            "Postmortem Generator",
-            "Remediation Engine",
+            "Severity Classifier (14B LoRA)",
+            "Intent Parser (14B LoRA)",
+            "Postmortem Generator (14B LoRA)",
+            "Speculative Remediation Engine (14B LoRA)",
+            "Chaos Engineering Architect (14B LoRA)",
         ],
-        error=err_msg,
+        error=probe.get("error"),
     )
 
 

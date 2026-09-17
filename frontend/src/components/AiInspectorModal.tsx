@@ -54,8 +54,6 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const handleTestSeverity = async () => {
     setSevLoading(true);
     try {
@@ -153,6 +151,8 @@ export function AiInspectorModal({ isOpen, onClose }: Props) {
       handleLoadMemory();
     }
   }, [activeTab]);
+
+  if (!isOpen) return null;
 
   return (
     <div

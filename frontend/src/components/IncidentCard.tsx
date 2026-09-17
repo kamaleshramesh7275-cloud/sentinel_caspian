@@ -1,5 +1,6 @@
 import React from 'react';
 import { Incident } from '../types';
+import { Clock, Radio, MessageSquare, Send, Mail, AlertTriangle, ShieldAlert, CheckCircle2, ArrowRight } from 'lucide-react';
 
 // ── Utility helpers ───────────────────────────────────────────────────────────
 export function timeAgo(dateStr: string): string {
@@ -11,46 +12,54 @@ export function timeAgo(dateStr: string): string {
   return `${Math.floor(delta / 86400)}d ago`;
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Severity Badge ────────────────────────────────────────────────────────────
 export function SeverityBadge({ severity }: { severity: string | null }) {
   const sev = (severity || 'unknown').toLowerCase();
   
-  const configMap: Record<string, { label: string; className: string }> = {
+  const configMap: Record<string, { label: string; className: string; icon: any }> = {
     critical: {
-      label: 'SEV-0 Critical',
-      className: 'bg-red-500/10 text-red-400 border-red-500/30',
+      label: 'SEV-1 Critical',
+      className: 'badge-critical',
+      icon: ShieldAlert,
     },
     high: {
-      label: 'SEV-1 High',
-      className: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      label: 'SEV-2 High',
+      className: 'badge-high',
+      icon: AlertTriangle,
     },
     medium: {
-      label: 'SEV-2 Medium',
-      className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+      label: 'SEV-3 Medium',
+      className: 'badge-medium',
+      icon: AlertTriangle,
     },
     low: {
-      label: 'SEV-3 Low',
-      className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      label: 'SEV-4 Low',
+      className: 'badge-low',
+      icon: CheckCircle2,
     },
     unknown: {
       label: 'SEV-TBD',
       className: 'bg-slate-800 text-slate-400 border-slate-700',
+      icon: AlertTriangle,
     },
   };
 
   const current = configMap[sev] || configMap.unknown;
+  const IconComponent = current.icon;
 
   return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border inline-flex items-center gap-1 ${current.className}`}>
-      {current.label}
+    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold tracking-wide border inline-flex items-center gap-1 ${current.className}`}>
+      <IconComponent className="w-3 h-3" />
+      <span>{current.label}</span>
     </span>
   );
 }
 
+// ── Status Dot ────────────────────────────────────────────────────────────────
 export function StatusDot({ status }: { status: string }) {
   const statusMap: Record<string, { label: string; dot: string; text: string }> = {
-    open: { label: 'Open', dot: 'bg-blue-400', text: 'text-blue-400' },
-    escalated: { label: 'Escalated', dot: 'bg-amber-400 animate-pulse', text: 'text-amber-400' },
+    open: { label: 'Open (Paging)', dot: 'bg-blue-400', text: 'text-blue-400' },
+    escalated: { label: 'Escalated', dot: 'bg-amber-400', text: 'text-amber-400' },
     ack: { label: 'Acknowledged', dot: 'bg-purple-400', text: 'text-purple-300' },
     resolved: { label: 'Resolved', dot: 'bg-emerald-400', text: 'text-emerald-400' },
   };
@@ -65,12 +74,12 @@ export function StatusDot({ status }: { status: string }) {
   );
 }
 
-function ChannelBadge({ channel }: { channel: string }) {
-  return (
-    <span className="text-[10px] px-2 py-0.5 rounded bg-[#1A2234] border border-[#283347] text-slate-300 capitalize font-medium">
-      {channel}
-    </span>
-  );
+function ChannelIcon({ channel }: { channel: string }) {
+  const c = channel.toLowerCase();
+  if (c.includes('slack')) return <MessageSquare className="w-3 h-3 text-slate-400" />;
+  if (c.includes('telegram')) return <Send className="w-3 h-3 text-slate-400" />;
+  if (c.includes('email')) return <Mail className="w-3 h-3 text-slate-400" />;
+  return <Radio className="w-3 h-3 text-slate-400" />;
 }
 
 // ── IncidentCard ──────────────────────────────────────────────────────────────
@@ -81,12 +90,12 @@ interface Props {
 }
 
 export function IncidentCard({ incident, onClick, selected }: Props) {
-  const sev = incident.severity || 'unknown';
+  const hasOverride = incident.agent_reasoning?.includes('CLUSTERING OVERRIDE') || incident.escalation_count > 0;
 
   return (
     <div
       id={`incident-card-${incident.id}`}
-      className={`incident-card sev-${sev} ${selected ? 'selected' : ''}`}
+      className={`incident-card ${selected ? 'selected' : ''}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -94,46 +103,49 @@ export function IncidentCard({ incident, onClick, selected }: Props) {
       aria-label={`Incident: ${incident.title}`}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      {/* Top row: Title + Badges */}
-      <div className="flex items-start justify-between gap-3">
+      {/* Top row: Title + Severity */}
+      <div className="flex items-start justify-between gap-2.5">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm leading-snug text-slate-100 hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono font-medium text-slate-500">
+              #INC-{incident.id.slice(0, 8)}
+            </span>
+            <span className="text-slate-700">·</span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              {timeAgo(incident.created_at)}
+            </span>
+          </div>
+          <h4 className="font-semibold text-xs leading-snug text-slate-200 hover:text-white transition-colors truncate">
             {incident.title}
           </h4>
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-400">
-            <span className="font-mono text-[11px] text-slate-400">
-              #{incident.id.slice(0, 8)}
+        </div>
+        <SeverityBadge severity={incident.severity} />
+      </div>
+
+      {/* Reasoning Snippet */}
+      {incident.agent_reasoning && (
+        <p className="text-[11px] text-slate-400 mt-2 line-clamp-1 leading-relaxed font-sans">
+          {incident.agent_reasoning}
+        </p>
+      )}
+
+      {/* Bottom row: Status + Channel Metadata */}
+      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#1F2937]/60">
+        <StatusDot status={incident.status} />
+
+        <div className="flex items-center gap-2">
+          {hasOverride && (
+            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-medium">
+              Clustered (+1)
             </span>
-            <span>·</span>
-            <span>{timeAgo(incident.created_at)}</span>
+          )}
+
+          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
+            <ChannelIcon channel={incident.current_channel || 'slack'} />
+            <span className="capitalize">{incident.current_channel || 'slack'}</span>
           </div>
         </div>
-
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <SeverityBadge severity={incident.severity} />
-          <StatusDot status={incident.status} />
-        </div>
       </div>
-
-      {/* Meta tags */}
-      <div className="flex items-center gap-2 mt-3 flex-wrap">
-        {incident.current_channel && <ChannelBadge channel={incident.current_channel} />}
-        {incident.escalation_count > 0 && (
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">
-            Escalation #{incident.escalation_count}
-          </span>
-        )}
-      </div>
-
-      {/* Autonomous reasoning snippet */}
-      {incident.agent_reasoning && (
-        <div className="mt-2.5 p-2 rounded-md bg-[#0E131E] border border-slate-800 text-[11px] text-slate-300 leading-relaxed">
-          <span className="text-purple-400 font-medium mr-1">Caspian AI:</span>
-          {incident.agent_reasoning.length > 115
-            ? incident.agent_reasoning.slice(0, 115) + '…'
-            : incident.agent_reasoning}
-        </div>
-      )}
     </div>
   );
 }

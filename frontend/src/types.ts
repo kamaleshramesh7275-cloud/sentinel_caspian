@@ -9,6 +9,7 @@ export interface Incident {
   created_at: string;
   last_notified_at: string;
   resolved_at: string | null;
+  channel_metadata?: Record<string, any>;
 }
 
 export interface TimelineEntry {
